@@ -1,51 +1,18 @@
-/*
-  Scan
-*/
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 #include <math.h>
 #include "FreeRTOSConfig.h"
 
+#include "MRSTasks.h"
 
-/*String beacon1 = "";
-String beacon2 = "";
-uint8_t currentBeacon = 1;
-int16_t value;
-double bbDistance = 1, b1Distance, b2Distance, temp;
-double coords[2] = {0, 0};*/
-
-
-/*void setup() {
-  Serial.begin(115200);
-  while (!Serial);
-
-  // begin initialization
-  if (!BLE.begin()) {
-    Serial.println("starting Bluetooth® Low Energy module failed!");
-
-    while (1);
-  }
-
-  Serial.println("Bluetooth® Low Energy Central scan");
-  Serial.print("Device Adress: ");
-  Serial.println(BLE.address());
-
-  // start scanning for peripheral
-  BLE.scanForName("beacon1");
-}*/
-
-
-
-/*void loop() {
+void periferalTask(void * pvParameters) {
   // check if a peripheral has been discovered
-  BLEDevice peripheral = BLE.available();
+  peripheral = BLE.available();
 
   if (peripheral) {
     // discovered a peripheral
     Serial.println("Discovered a peripheral");
     Serial.println("-----------------------");
-    
-     
 
     // print address
     Serial.print("Address: ");
@@ -63,7 +30,10 @@ double coords[2] = {0, 0};*/
       Serial.print("Local Name: ");
       Serial.println(peripheral.localName());
     }
+  }
+}
 
+void distanceTask(void * pvParameters) {
     // print the RSSI
     Serial.print("RSSI: ");
     Serial.println(peripheral.rssi());
@@ -91,42 +61,8 @@ double coords[2] = {0, 0};*/
       }
       Serial.printf("co-ordinates: %.2f, %.2f\r\n", coords[0], coords[1]);
     }
-
-    Serial.println();
-    if (currentBeacon == 1) {
-      currentBeacon = 2;
-      BLE.stopScan();
-      delay(1000);
-      BLE.scanForName("beacon2"); 
-    } else {
-      currentBeacon = 1;
-      BLE.stopScan();
-      delay(1000);
-      BLE.scanForName("beacon1"); 
-    }
-    delay(1000);
-  }
-}*/
-
-void setup() {
-  Serial.begin(115200);
-  while (!Serial);
-
-  // begin initialization
-  if (!BLE.begin()) {
-    Serial.println("starting Bluetooth® Low Energy module failed!");
-
-    while (1);
-  }
-
-  Serial.println("Bluetooth® Low Energy Central scan");
-  Serial.print("Device Adress: ");
-  Serial.println(BLE.address());
-
-  // start scanning for peripheral
-  BLE.scanForName("beacon1");
 }
 
-void loop() {
-  
+void switchBeaconTask(void * pvParameters) {
+
 }
