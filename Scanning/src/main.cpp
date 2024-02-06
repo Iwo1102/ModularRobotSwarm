@@ -1,14 +1,5 @@
 /*
   Scan
-
-  This example scans for Bluetooth® Low Energy peripherals and prints out their advertising details:
-  address, local name, advertised service UUID's.
-
-  The circuit:
-  - Arduino MKR WiFi 1010, Arduino Uno WiFi Rev2 board, Arduino Nano 33 IoT,
-    Arduino Nano 33 BLE, or Arduino Nano 33 BLE Sense board.
-
-  This example code is in the public domain.
 */
 #include <Arduino.h>
 #include <ArduinoBLE.h>
@@ -18,7 +9,7 @@ String beacon1 = "";
 String beacon2 = "";
 uint8_t currentBeacon = 1;
 int16_t value;
-double bbDistance = 5, b1Distance, b2Distance, temp;
+double bbDistance = 1, b1Distance, b2Distance, temp;
 double coords[2] = {0, 0};
 
 
@@ -74,7 +65,7 @@ void loop() {
     // print the RSSI
     Serial.print("RSSI: ");
     Serial.println(peripheral.rssi());
-    double power = (((double)-37 + (double)abs(peripheral.rssi())) / ((double)10 * (double)5));
+    double power = (((double)-50 + (double)abs(peripheral.rssi())) / ((double)10 * (double)5));
     double distance = pow(10, power);
     Serial.printf("Distance: %.2fm\r\n", distance);
     if (currentBeacon == 1) {

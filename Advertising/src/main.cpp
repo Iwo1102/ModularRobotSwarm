@@ -1,18 +1,8 @@
 /*
-  Scan
-
-  This example scans for Bluetooth® Low Energy peripherals and prints out their advertising details:
-  address, local name, advertised service UUID's.
-
-  The circuit:
-  - Arduino MKR WiFi 1010, Arduino Uno WiFi Rev2 board, Arduino Nano 33 IoT,
-    Arduino Nano 33 BLE, or Arduino Nano 33 BLE Sense board.
-
-  This example code is in the public domain.
+  advertising
 */
 #include <Arduino.h>
 #include <ArduinoBLE.h>
-#include <string.h>
 
 #define INTERVAL_TO_MS(x) (x / 0.625)
 #define MEBEACON "beacon2"
@@ -20,6 +10,8 @@
 
 bool adv_scan = 1;
 
+BLEService beaconService("19B10000-F512-0A71-54B1-D104768A1214");
+BLECharacteristic rssiCharacterisitc("19B10000-F512-0A71-54B1-D104768A1214", BLERead | BLEWrite | BLEBroadcast, "0");
 
 void setup() {
   Serial.begin(115200);
@@ -31,21 +23,20 @@ void setup() {
 
     while (1);
   }
-  BLE.setLocalName(MEBEACON);
 
-  
+  beaconService.addCharacteristic(rssiCharacterisitc);
 
   Serial.println("Bluetooth® Low Energy beacon");
   Serial.print("Device Adress: ");
   Serial.println(BLE.address());
 
+  BLE.setLocalName(MEBEACON);
   
   BLE.scanForName(YOUBEACON);
   BLE.advertise();
 }
 
 void loop() {
-  int16_t rssi;
 
   if (adv_scan) {
      BLEDevice peripheral = BLE.available();
@@ -65,17 +56,42 @@ void loop() {
         Serial.println(peripheral.localName());
       }
 
+      if (peripheral.hasAdvertisedServiceUuid()) {
+        Serial.print("Service UUIDs: ");
+        for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
+          Serial.print(peripheral.advertisedServiceUuid(i));
+          Serial.print(" ");
+        }
+        Serial.println();
+      }
+
+
       Serial.print("RSSI: ");
       Serial.println(peripheral.rssi());
-     
+      char rssi[5];
+      sprintf(rssi, "%d", peripheral.rssi());
+      double power = (((double)-37 + (double)abs(peripheral.rssi())) / ((double)10 * (double)5));
+      double distance = pow(10, power);
+      Serial.printf("Distance: %.2fm\r\n", distance);
+
+      distance = 0;
+
+      rssiCharacterisitc.writeValue(rssi);
+      if (rssiCharacterisitc.broadcast())
+        Serial.printf("Broadcast Successful\r\n");
+      else
+        Serial.printf("Broadcast Unsuccessful\r\n");
+
       BLE.stopScan();
       adv_scan = 0;
+      delay(1000);
     }
   } else {
 
     adv_scan = 1;
     BLE.scanForName(YOUBEACON);
+    delay(2000);
   }
 
-  delay(1000);
+ 
 }
