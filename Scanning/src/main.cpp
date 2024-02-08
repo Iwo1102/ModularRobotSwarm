@@ -6,6 +6,9 @@
 #include <math.h>
 #include "FreeRTOSConfig.h"
 
+#include "MRSTasks.h"
+
+struct mrsTask_h taskVals2;
 
 /*String beacon1 = "";
 String beacon2 = "";
@@ -125,8 +128,38 @@ void setup() {
 
   // start scanning for peripheral
   BLE.scanForName("beacon1");
+
+  xTaskCreate(periferalTask, "Peripheral Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
+  //xTaskCreate(distanceTask, "Distance Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
+ // xTaskCreate(switchBeaconTask, "Switch Beacon Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
+  vTaskStartScheduler();
+
 }
 
 void loop() {
-  
+   // check if a peripheral has been discovered
+  taskVals2.peripheral = BLE.available();
+
+  if (taskVals2.peripheral) {
+    // discovered a peripheral
+    Serial.println("Discovered a peripheral");
+    Serial.println("-----------------------");
+
+    // print address
+    Serial.print("Address: ");
+    Serial.println(taskVals2.peripheral.address());
+    if (taskVals2.currentBeacon == 1) {
+      taskVals2.beacon1 = taskVals2.peripheral.address();
+    } else {
+      taskVals2.beacon2 = taskVals2.peripheral.address();
+    }
+
+    BLE.stopScan();
+
+    // print the local name, if present
+    if (taskVals2.peripheral.hasLocalName()) {
+      Serial.print("Local Name: ");
+      Serial.println(taskVals2.peripheral.localName());
+    }
+  }
 }
