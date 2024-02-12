@@ -3,12 +3,8 @@
 */
 #include <Arduino.h>
 #include <ArduinoBLE.h>
-#include <math.h>
-#include "FreeRTOSConfig.h"
 
 #include "MRSTasks.h"
-
-struct mrsTask_h taskVals2;
 
 /*String beacon1 = "";
 String beacon2 = "";
@@ -112,54 +108,29 @@ double coords[2] = {0, 0};*/
 }*/
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial);
+	Serial.begin(115200);
+	while (!Serial);
 
-  // begin initialization
-  if (!BLE.begin()) {
-    Serial.println("starting Bluetooth® Low Energy module failed!");
+	// begin initialization
+	if (!BLE.begin()) {
+		Serial.println("starting Bluetooth® Low Energy module failed!");
 
-    while (1);
-  }
+		while (1);
+	}
 
-  Serial.println("Bluetooth® Low Energy Central scan");
-  Serial.print("Device Adress: ");
-  Serial.println(BLE.address());
+	Serial.println("Bluetooth® Low Energy Central scan");
+	Serial.print("Device Adress: ");
+	Serial.println(BLE.address());
 
-  // start scanning for peripheral
-  BLE.scanForName("beacon1");
+	// start scanning for peripheral
+	BLE.scanForName("beacon1");
 
-  xTaskCreate(periferalTask, "Peripheral Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
-  //xTaskCreate(distanceTask, "Distance Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
- // xTaskCreate(switchBeaconTask, "Switch Beacon Task", 768, NULL, configMAX_PRIORITIES - 1, NULL);
-  vTaskStartScheduler();
-
+	xTaskCreate(peripheralTask, "Peripheral Task", 2 * 1024, NULL, configMAX_PRIORITIES - 1, mrsHandle.peripheralHandle);
+	xTaskCreate(distanceTask, "Distance Task", 2 * 1024, NULL, configMAX_PRIORITIES - 1, mrsHandle.distanceHandle);
+	xTaskCreate(switchBeaconTask, "Switch Beacon Task", 2 * 1024, NULL, configMAX_PRIORITIES - 1, mrsHandle.switchButtonHandle);
+	mrsHandle.BeaconfoundSemaphore = xSemaphoreCreateBinary();
+	mrsHandle.switchBeaconSemaphore = xSemaphoreCreateBinary();
 }
 
 void loop() {
-   // check if a peripheral has been discovered
-  taskVals2.peripheral = BLE.available();
-
-  if (taskVals2.peripheral) {
-    // discovered a peripheral
-    Serial.println("Discovered a peripheral");
-    Serial.println("-----------------------");
-
-    // print address
-    Serial.print("Address: ");
-    Serial.println(taskVals2.peripheral.address());
-    if (taskVals2.currentBeacon == 1) {
-      taskVals2.beacon1 = taskVals2.peripheral.address();
-    } else {
-      taskVals2.beacon2 = taskVals2.peripheral.address();
-    }
-
-    BLE.stopScan();
-
-    // print the local name, if present
-    if (taskVals2.peripheral.hasLocalName()) {
-      Serial.print("Local Name: ");
-      Serial.println(taskVals2.peripheral.localName());
-    }
-  }
 }
