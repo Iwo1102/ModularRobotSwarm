@@ -6,6 +6,7 @@ void distanceTask(void * pvParameters);
 void switchBeaconTask(void * pvParameters);
 
 struct mrsTask_h {
+    BLEDevice peripheral;
     String beacon1 = "";
     String beacon2 = "";
     uint8_t currentBeacon = 1;
@@ -15,9 +16,8 @@ struct mrsTask_h {
 };
 
 struct mrsTaskHandle_h {
-    TaskHandle_t *peripheralHandle, *switchButtonHandle, *distanceHandle;
+    TaskHandle_t peripheral = NULL, distance = NULL;
     SemaphoreHandle_t BeaconfoundSemaphore = NULL;
-    SemaphoreHandle_t switchBeaconSemaphore = NULL;
 };
 
 extern struct mrsTask_h taskVals;

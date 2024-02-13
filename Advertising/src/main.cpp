@@ -5,8 +5,8 @@
 #include <ArduinoBLE.h>
 
 #define INTERVAL_TO_MS(x) (x / 0.625)
-#define MEBEACON "beacon1"
-#define YOUBEACON "beacon2"
+#define MEBEACON "beacon2"
+#define YOUBEACON "beacon1"
 
 bool adv_scan = 1;
 
@@ -84,13 +84,13 @@ void loop() {
 
       BLE.stopScan();
       adv_scan = 0;
-      delay(1000);
+      delay(50);
     }
   } else {
 
     adv_scan = 1;
     BLE.scanForName(YOUBEACON);
-    delay(2000);
+    delay(100);
   }
 
  
