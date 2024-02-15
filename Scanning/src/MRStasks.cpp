@@ -22,10 +22,12 @@ void peripheralTask(void * pvParameters) {
 			// print address
 			Serial.print("Address: ");
 			Serial.println(taskVals.peripheral.address());
-			if (taskVals.currentBeacon == 1)
+			if (taskVals.peripheral.localName() == "beacon1")
 				taskVals.beacon1 = taskVals.peripheral.address();
-			else 
+			else if (taskVals.peripheral.localName() == "beacon2")
 				taskVals.beacon2 = taskVals.peripheral.address();
+			else
+				Serial.println("Beacon name not found");
 
 			BLE.stopScan();
 
@@ -44,31 +46,21 @@ void peripheralTask(void * pvParameters) {
 void distanceTask(void * pvParameters) {
 	// print the RSSI
 	for(;;) {
+    	
 		if(xSemaphoreTake(mrsHandle.BeaconfoundSemaphore, 0) == pdTRUE) {
 			Serial.print("RSSI: ");
 			Serial.println(taskVals.peripheral.rssi());
 			float distance = rssiToDistance(-50, taskVals.peripheral.rssi(), 5);
 			Serial.printf("Distance: %.2fm\r\n", distance);
-			if (taskVals.currentBeacon == 1) {
-				Serial.println("Beacon 1");
-			taskVals.b1Distance = distance;
-			} else {
-				Serial.println("Beacon 2");
+			if (taskVals.currentBeacon == 1)
+				taskVals.b1Distance = distance;
+			else
 				taskVals.b2Distance = distance;
-			}
 			distance = 0;
 
 			//Get the Co-ordinates of the Robot
 			if (taskVals.b1Distance != 0 && taskVals.b2Distance != 0) {
-				taskVals.temp = pow(taskVals.bbDistance, 2) + pow(taskVals.b1Distance, 2) - pow(taskVals.b2Distance, 2);
-				taskVals.coords[0] = taskVals.temp / (2 * taskVals.bbDistance);
-				taskVals.coords[1] = (pow(taskVals.b1Distance, 2) - pow(taskVals.coords[0], 2));
-				if (taskVals.coords[1] < 0) {
-					taskVals.coords[1] = sqrt(abs(taskVals.coords[1]));
-					taskVals.coords[1] = taskVals.coords[1] * -1;
-				} else {
-					taskVals.coords[1] = sqrt(taskVals.coords[1]);
-				}
+				getRobotCoords(taskVals.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
 				Serial.printf("co-ordinates: %.2f, %.2f\r\n", taskVals.coords[0], taskVals.coords[1]);
 			}
 			//switch beacon to scan
