@@ -84,13 +84,13 @@ void loop() {
 
       BLE.stopScan();
       adv_scan = 0;
-      delay(1000);
+      delay(50);
     }
   } else {
 
     adv_scan = 1;
     BLE.scanForName(YOUBEACON);
-    delay(2000);
+    delay(100);
   }
 
  
