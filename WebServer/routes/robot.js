@@ -1,4 +1,5 @@
 const express = require('express');
+const { CancellationToken } = require('mongodb');
 const router = express.Router();
 const getDbClient = require('../util/database').getDbClient;
 
@@ -13,10 +14,21 @@ router.get('/findCell', (req, res, next) => {
   const db = getDbClient()
   const collection = db.collection('robots')
   const name = req.query.name;
-  let cells = db.collection('robots').find({}).toArray(function(err, result) {
-    if (err) throw err;
-  }).then(function(result){
-    console.log(result)})
+  let number;
+  const cells =db.collection('robots').count({}, (err, num) => {
+    if(err) return callback(err);
+  }).then((err, number) =>{
+    if (err) {
+      return console.log(err.message)
+    }
+  }).catch((num) => {
+    number = num
+  })
+
+  console.log(number)
+
+  
+
   //console.log(cells.JsonLength());
  /* if (!) {
     console.log("No Documents found");
