@@ -18,7 +18,8 @@ const robotSchema = new mongoose.Schema({
 	name: String,
 	coords: [Number],
 	available: Boolean,
-	orders: [Number]
+	orders: [Number],
+	lastUpdate: Number
 
 });
 const beaconSchema = new mongoose.Schema({
@@ -26,6 +27,7 @@ const beaconSchema = new mongoose.Schema({
 	name: String,
 	distance: Number,
 	available: Boolean,
+	lastUpdate: Number
 
 });
 
@@ -36,18 +38,31 @@ const Beacon = mongoose.model('Beacons', beaconSchema);
 // Middleware to parse JSON in requests
 app.use(bodyParser.json());
 
-// Routes
-/*app.post('/users', async (req, res) => {
-try {
-	const { name, email } = req.body;
-	const newUser = new User({ name, email });
-	const savedUser = await newUser.save();
-	res.json(savedUser);
-} catch (error) {
-	res.status(500).json({ error: error.message });
-}
-});*/
+//Check if still connected
+setInterval(async () => {
+	try {
+		let robots = await Robot.find({available: {$eq: 0}});
+		let beacons = await Beacon.find({available: {$eq: 0}});
 
+		robots.map(async robot => {
+			if ((Date.now() - robot.lastUpdate) > 10000) {
+				console.log("Lost connection with robot " + robot.id);
+				await Robot.findOneAndUpdate({id: { $eq: robot.id}}, {available: 1})
+			}
+		})
+		beacons.map(async beacon => {
+			if ((Date.now() - beacon.lastUpdate) > 10000) {
+				console.log("Lost connection beacon " + beacon.id);
+				await Beacon.findOneAndUpdate({id: { $eq: beacon.id}}, {available: 1})
+			}
+		})
+	} catch (error) {
+		console.log("error 500: " + error.message)
+	}
+}, 5000)
+
+
+//Robot Routes
 app.post('/findCell', async (req, res) => {
 	let num;
 	try {
@@ -67,7 +82,8 @@ app.post('/findCell', async (req, res) => {
 								name: req.body.name, 
 								coords: [req.body.coords[0], req.body.coords[1]], 
 								available: 0, 
-								orders: [0]
+								orders: [0],
+								lastUpdate: Date.now()
 							});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
@@ -79,7 +95,8 @@ app.post('/findCell', async (req, res) => {
 											name: req.body.name,
 											available: 0,
 											coords: [req.body.coords[0], req.body.coords[1]],
-											orders: [0]
+											orders: [0],
+											lastUpdate: Date.now()
 										});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
@@ -87,9 +104,114 @@ app.post('/findCell', async (req, res) => {
 	}
 });
 
-app.get('/TestConnection', (req, res) => {
-	res.json(1);
+app.get('/TestConnection', async (req, res) => {
+	let callerId = req.query.id
+	let type = req.query.type
+
+	try {
+		if (type == 0) {
+			console.log("Updating lastUpdate of robot " + callerId)
+			let robot = await Robot.find({id: {$eq: callerId}})
+			if (robot.available = 1) {
+				console.log("Lost Connection with robot " + callerId)
+				res.json(2)
+			} else {
+				res.json(1)
+				await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
+			}
+		} else if (type == 1) {
+			console.log("Updating lastUpdate of beacon " + callerId)
+			let beacon = await Beacon.find({id: {$eq: callerId}})
+			if (beacon.available = 1) {
+				console.log("Lost Connection with beacon " + callerId)
+				res.json(2)
+			} else {
+				res.json(1)
+				await Beacon.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
+			}
+		}
+		
+	} catch (error){
+		res.status(500).json({ error: error.message });
+	}
 })
+
+app.post('/updateLocation',  async (req, res) => {
+	let callerId = req.body.id;
+	try {
+		console.log("Updating position of robot " + callerId)
+		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {coords: [req.body.coords[0], req.body.coords[1]], lastUpdate: Date.now()})
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+})
+
+app.get('/findOthers', async (req, res) => {
+	let callerId = req.query.id
+
+	try{
+		console.log("Finding other robots for robot " + callerId)
+		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
+		let robots = await Robot.find({available: {$eq: 0}})
+		res.json(robots)
+
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+})
+
+app.get('/getDistance', async (req, res) => {
+	try {
+		let beacon = await Beacon.findOne()
+		res.json(beacon.distance)
+		console.log("distance: " + beacon.distance)
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+})
+
+
+//Beacon Routes
+app.post('/findBeaconCell', async (req, res) => {
+	let num;
+	try {
+		const beacons = await Beacon.find({available: { $eq: 1 }});
+		res.json(beacons);
+		num = beacons.length;
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+	console.log(num)
+	if(num == 0) {
+		try {
+			console.log("Available beacons not found, creating new document")
+			let setId = (await Beacon.find()).length;
+			await Beacon.create({
+								id: setId,
+								name: req.body.name, 
+								available: 0,
+								distance: req.body.distance,
+								lastUpdate: Date.now()
+							});
+		} catch (error) {
+			res.status(500).json({ error: error.message });
+		}
+	} else {
+		try {
+			console.log("Beacons found, editing document")
+			await Beacon.findOneAndUpdate({available: {$eq: 1}}, {
+											name: req.body.name,
+											available: 0,
+											distance: req.body.distance,
+											lastUpdate: Date.now()
+										});
+		} catch (error) {
+			res.status(500).json({ error: error.message });
+		}
+	}
+});
+
+
 
 app.get('/', (req, res) => {
 	res.send("egg");
