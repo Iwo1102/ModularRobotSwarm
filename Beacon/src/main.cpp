@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 
+#include "MRSwifiClient.h"
+
 #define INTERVAL_TO_MS(x) (x / 0.625)
 #define MEBEACON "beacon2"
 #define YOUBEACON "beacon1"
