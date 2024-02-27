@@ -19,6 +19,8 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
+  MRS_SetupConnection();
+
   // begin initialization
   if (!BLE.begin()) {
     Serial.println("starting Bluetooth® Low Energy module failed!");
@@ -39,7 +41,7 @@ void setup() {
 }
 
 void loop() {
-
+double distance = 0;
   if (adv_scan) {
      BLEDevice peripheral = BLE.available();
 
@@ -73,10 +75,8 @@ void loop() {
       char rssi[5];
       sprintf(rssi, "%d", peripheral.rssi());
       double power = (((double)-37 + (double)abs(peripheral.rssi())) / ((double)10 * (double)5));
-      double distance = pow(10, power);
+      distance = pow(10, power);
       Serial.printf("Distance: %.2fm\r\n", distance);
-
-      distance = 0;
 
       rssiCharacterisitc.writeValue(rssi);
       if (rssiCharacterisitc.broadcast())
@@ -95,5 +95,12 @@ void loop() {
     delay(100);
   }
 
+  if(distance != 0) {
+    //findCell
+  char distanceStr[8];
+  memcpy(distanceStr, &distance, 8);
+
+  MRS_wifiPostJson("/findBeaconCell", MEBEACON, distanceStr);
+  }
  
 }

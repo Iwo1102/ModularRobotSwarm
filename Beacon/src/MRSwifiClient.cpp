@@ -17,7 +17,7 @@ void MRS_SetupConnection() {
     Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
 }
 
-void MRS_wifiPostJson(char page[32], char name[16], char distance[8]) {
+int MRS_wifiPostJson(char page[32], char name[16], char distance[8]) {
     char httpRequestData[128];
     char url[64];
     if(WiFi.status()== WL_CONNECTED){
