@@ -4,17 +4,17 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include <cstring>
+#include <string>
 
 struct MRS_wifi {
-    const char* SSID = "ssid";
-    const char* PASSWORD = "password";
-    const char* serverName = "Servername";
+    const char* SSID = "";
+    const char* PASSWORD = "";
+    const char* serverName = "";
 };
 
 void MRS_SetupConnection();
-int MRS_wifiPostJson(char[32], char[16], char[8]);
-String MRS_wifiGetJson(char[32], char[4]);
+void MRS_wifiPostJson(std::string, std::string, std::string, char*);
+String MRS_wifiGetJson(std::string, std::string, std::string);
 
 extern struct MRS_wifi MRS_wifi;
 

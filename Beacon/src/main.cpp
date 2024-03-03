@@ -3,14 +3,18 @@
 */
 #include <Arduino.h>
 #include <ArduinoBLE.h>
+#include <string.h>
+#include <stdio.h> 
 
 #include "MRSwifiClient.h"
 
 #define INTERVAL_TO_MS(x) (x / 0.625)
-#define MEBEACON "beacon2"
-#define YOUBEACON "beacon1"
+const std::string MEBEACON = "beacon1";
+const std::string YOUBEACON = "beacon2";
 
 bool adv_scan = 1;
+
+int id = -1;
 
 BLEService beaconService("19B10000-F512-0A71-54B1-D104768A1214");
 BLECharacteristic rssiCharacterisitc("19B10000-F512-0A71-54B1-D104768A1214", BLERead | BLEWrite | BLEBroadcast, "0");
@@ -34,14 +38,14 @@ void setup() {
   Serial.print("Device Adress: ");
   Serial.println(BLE.address());
 
-  BLE.setLocalName(MEBEACON);
+  BLE.setLocalName(MEBEACON.c_str());
   
-  BLE.scanForName(YOUBEACON);
+  BLE.scanForName(YOUBEACON.c_str());
   BLE.advertise();
 }
 
 void loop() {
-double distance = 0;
+float distance = 0;
   if (adv_scan) {
      BLEDevice peripheral = BLE.available();
 
@@ -74,7 +78,7 @@ double distance = 0;
       Serial.println(peripheral.rssi());
       char rssi[5];
       sprintf(rssi, "%d", peripheral.rssi());
-      double power = (((double)-37 + (double)abs(peripheral.rssi())) / ((double)10 * (double)5));
+      float power = (((float)-37 + (float)abs(peripheral.rssi())) / ((float)10 * (float)5));
       distance = pow(10, power);
       Serial.printf("Distance: %.2fm\r\n", distance);
 
@@ -91,16 +95,23 @@ double distance = 0;
   } else {
 
     adv_scan = 1;
-    BLE.scanForName(YOUBEACON);
+    BLE.scanForName(YOUBEACON.c_str());
     delay(100);
   }
-
-  if(distance != 0) {
-    //findCell
-  char distanceStr[8];
-  memcpy(distanceStr, &distance, 8);
-
-  MRS_wifiPostJson("/findBeaconCell", MEBEACON, distanceStr);
-  }
- 
+	char distanceStr[10];
+	snprintf(distanceStr, sizeof(distanceStr), "%f", distance);
+  	if(id == -1) {
+    	//findCell
+  		MRS_wifiPostJson("/findBeaconCell", "name", MEBEACON, distanceStr);
+		id = MRS_wifiGetJson("/getId", "name", MEBEACON).toInt();
+  	} else {
+		char idStr[10];
+		snprintf(idStr, sizeof(idStr), "%d", id);
+		MRS_wifiPostJson("/updateDistance", "id", idStr, distanceStr);
+		if (!MRS_wifiGetJson("/TestConnection", "id", idStr).toInt()){
+			id = -1;
+			Serial.printf("Availability was lost\n");
+		}
+	}
+	delay(1000);
 }
