@@ -1,4 +1,5 @@
 #include "MRSwifiClient.h"
+#include <cstring>
 
 struct MRS_wifi MRS_wifi;
 
@@ -17,31 +18,29 @@ void MRS_SetupConnection() {
     Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
 }
 
-int MRS_wifiPostJson(char page[32], char name[16], char distance[8]) {
-    char httpRequestData[128];
-    char url[64];
+void MRS_wifiPostJson(std::string page, std::string valueType, std::string value, char distance[10]) {
+    std::string httpRequestData;
+    std::string url;
     if(WiFi.status()== WL_CONNECTED){
         WiFiClient client;
         HTTPClient http;
         
-        strcpy(url, MRS_wifi.serverName);
-        strcat(url, page);
 
-        http.begin(client, url);
+        url = MRS_wifi.serverName;
+        url = url + page;
 
+        http.begin(client, url.c_str());
         http.addHeader("Content-Type", "application/json");
 
         // Data to send with HTTP POST
         //concat string into HTTPRequestData
-        //String httpRequestData = "{\"name\":" + name + ",\"distance\":" + distance + "}";
         if (page == "/findBeaconCell")
-        strcpy(httpRequestData, "{\"name\": \"");
-        strcat(httpRequestData, name);
-        strcat(httpRequestData, "\",\"distance\":");
-        strcat(httpRequestData, distance);
-
+            httpRequestData = "{\"name\": \"" + value + "\",\"distance\": " + distance + "}";
+        if (page == "/updateDistance")
+            httpRequestData = "{\"id\": \"" + value + "\",\"distance\": " + distance + "}";
         // Send HTTP POST request
-        int httpResponseCode = http.POST(httpRequestData);
+        int httpResponseCode = http.POST(httpRequestData.c_str());
+        Serial.printf("POST HTTP Response code: %d\n", httpResponseCode);
 
         http.end();
     } else {
@@ -50,39 +49,39 @@ int MRS_wifiPostJson(char page[32], char name[16], char distance[8]) {
     }
 }
 
-String MRS_wifiGetJson(char page[32], char id[4]) {
-    char url[64];
+String MRS_wifiGetJson(std::string page, std::string valueType, std::string value) {
+    std::string url;
     String json = "{}";
     if(WiFi.status()== WL_CONNECTED){
         WiFiClient client;
         HTTPClient http;
         
-        strcpy(url, MRS_wifi.serverName);
-        strcat(url, page);
+        url = MRS_wifi.serverName;
+        url = url + page;
+
 
         if (page == "/TestConnection") {
-            strcat(url, "?id=");
-            strcat(url, id);
-            strcat(url, "&type=1");
+            url = url + "?id=" + value + "&type=1";
+        } else if (page == "/getId") {
+            url = url + "?name=" + value + "&type=1";
+        } else {
+            return "-1";
         }
 
-        http.begin(url);
+        http.begin(url.c_str());
 
         int httpResponseCode = http.GET();
 
         if (httpResponseCode > 0) {
-            Serial.print("HTTP Response code: ");
+            Serial.print("GET HTTP Response code: ");
             Serial.println(httpResponseCode);
             json = http.getString();
-        } else {
-            Serial.print("Error code: ");
-            Serial.println(httpResponseCode);
         }
 
         http.end();
     } else {
         Serial.println("WiFi Disconnected");
-
+        return "-1";
     }
     return json;
 }

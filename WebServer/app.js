@@ -45,13 +45,13 @@ setInterval(async () => {
 		let beacons = await Beacon.find({available: {$eq: 0}});
 
 		robots.map(async robot => {
-			if ((Date.now() - robot.lastUpdate) > 10000) {
+			if ((Date.now() - robot.lastUpdate) > 20000) {
 				console.log("Lost connection with robot " + robot.id);
 				await Robot.findOneAndUpdate({id: { $eq: robot.id}}, {available: 1})
 			}
 		})
 		beacons.map(async beacon => {
-			if ((Date.now() - beacon.lastUpdate) > 10000) {
+			if ((Date.now() - beacon.lastUpdate) > 20000) {
 				console.log("Lost connection beacon " + beacon.id);
 				await Beacon.findOneAndUpdate({id: { $eq: beacon.id}}, {available: 1})
 			}
@@ -112,9 +112,9 @@ app.get('/TestConnection', async (req, res) => {
 		if (type == 0) {
 			console.log("Updating lastUpdate of robot " + callerId)
 			let robot = await Robot.find({id: {$eq: callerId}})
-			if (robot.available = 1) {
+			if (robot.available == 1) {
 				console.log("Lost Connection with robot " + callerId)
-				res.json(2)
+				res.json(0)
 			} else {
 				res.json(1)
 				await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
@@ -122,12 +122,12 @@ app.get('/TestConnection', async (req, res) => {
 		} else if (type == 1) {
 			console.log("Updating lastUpdate of beacon " + callerId)
 			let beacon = await Beacon.find({id: {$eq: callerId}})
-			if (beacon.available = 1) {
+			if (beacon.available == 1) {
 				console.log("Lost Connection with beacon " + callerId)
-				res.json(2)
+				res.json(0)
 			} else {
-				res.json(1)
 				await Beacon.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
+				res.json(1)
 			}
 		}
 		
@@ -135,6 +135,26 @@ app.get('/TestConnection', async (req, res) => {
 		res.status(500).json({ error: error.message });
 	}
 })
+
+app.get('/getId', async (req, res) => {
+	let callerName = req.query.name;
+	let callerType = req.query.type;
+	try {
+		if (callerType == 0)  {
+			console.log("Getting id of Robot " + callerName)
+			let robot = await Robot.find({name: {$eq: req.query.name}});
+			console.log(robot)
+			res.json(robot[0].id)
+		} else if (callerType == 1) {
+			console.log("Getting id of Beacon " + callerName)
+			let beacon = await Beacon.find({name: {$eq: req.query.name}});
+			res.json(beacon[0].id)
+		}
+	} catch (error){
+		res.status(500).json({ error: error.message });
+	}
+});
+
 
 app.post('/updateLocation',  async (req, res) => {
 	let callerId = req.body.id;
@@ -208,6 +228,17 @@ app.post('/findBeaconCell', async (req, res) => {
 		} catch (error) {
 			res.status(500).json({ error: error.message });
 		}
+	}
+});
+
+app.post('/updateDistance', async (req, res) => {
+	let callerId = req.body.name;
+	let callerDistance = req.body.distance;
+	try {
+		console.log("updating distance of beacon id " + callerId);
+		await Beacon.findOneAndUpdate({id: {$eq: callerId}, distance: callerDistance, lastUpdate: Date.now() });
+	} catch (error) {
+		res.status(500).json({ error: error.message });
 	}
 });
 
