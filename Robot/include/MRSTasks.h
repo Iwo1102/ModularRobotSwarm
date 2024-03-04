@@ -12,6 +12,7 @@ struct mrsTask_h {
     uint8_t currentBeacon = 1;
     float bbDistance = 1, b1Distance, b2Distance;
     float coords[2] = {0, 0};
+    const std::string name = "Robot1";
 };
 
 struct mrsTaskHandle_h {

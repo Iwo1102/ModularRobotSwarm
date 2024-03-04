@@ -10,6 +10,8 @@ void setup() {
 	Serial.begin(115200);
 	while (!Serial);
 
+	// Connect to Wifi
+	void MRS_SetupConnection();
 	// begin initialization
 	if (!BLE.begin()) {
 		Serial.println("starting Bluetooth® Low Energy module failed!");

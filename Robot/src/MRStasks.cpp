@@ -5,6 +5,7 @@
 
 #include "MRSTasks.h"
 #include "MRSAlgorithms.h"
+#include "MRSwifiClient.h"
 
 struct mrsTask_h taskVals;
 struct mrsTaskHandle_h  mrsHandle;
@@ -76,5 +77,14 @@ void distanceTask(void * pvParameters) {
 			}
 		} 
 		vTaskResume(mrsHandle.peripheral);
+	}
+}
+
+void FindCell(void * pvParameters) {
+	for(;;) {
+		char coordStr0[10], coordStr1[10];
+		snprintf(coordStr0, sizeof(coordStr0), "%.2f", taskVals.coords[0]);
+		snprintf(coordStr1, sizeof(coordStr1), "%.2f", taskVals.coords[1]);
+		MRS_wifiPostJson("/findCell", "name, coords", taskVals.name + ", [" + coordStr0 + "," + coordStr1 + "]");
 	}
 }
