@@ -5,13 +5,14 @@
 #include <ArduinoBLE.h>
 
 #include "MRSTasks.h"
+#include "MRSwifiClient.h"
 
 void setup() {
 	Serial.begin(115200);
 	while (!Serial);
 
 	// Connect to Wifi
-	void MRS_SetupConnection();
+	MRS_SetupConnection();
 	// begin initialization
 	if (!BLE.begin()) {
 		Serial.println("starting Bluetooth® Low Energy module failed!");
@@ -27,7 +28,8 @@ void setup() {
 	BLE.scanForName("beacon1");
 
 	xTaskCreate(peripheralTask, "Peripheral Task", 2 * 1024, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
-	xTaskCreate(distanceTask, "Distance Task", 2 * 1024, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance);
+	xTaskCreate(distanceTask, "Distance Task", 2 * 1024, NULL, configMAX_PRIORITIES - 3, &mrsHandle.distance);
+	xTaskCreate(findCellTask, "Find Cell Task", 4 * 1024, NULL, configMAX_PRIORITIES - 2, &mrsHandle.findCell);
 	mrsHandle.BeaconfoundSemaphore = xSemaphoreCreateBinary();
 }
 

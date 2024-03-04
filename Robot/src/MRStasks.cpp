@@ -1,14 +1,8 @@
-#include <Arduino.h>
-#include <ArduinoBLE.h>
-#include <math.h>
-#include "FreeRTOSConfig.h"
-
 #include "MRSTasks.h"
-#include "MRSAlgorithms.h"
-#include "MRSwifiClient.h"
 
 struct mrsTask_h taskVals;
 struct mrsTaskHandle_h  mrsHandle;
+struct mrsData_h robotData;
 
 void peripheralTask(void * pvParameters) {
 	for (;;) {
@@ -47,7 +41,6 @@ void peripheralTask(void * pvParameters) {
 void distanceTask(void * pvParameters) {
 	// print the RSSI
 	for(;;) {
-    	
 		if(xSemaphoreTake(mrsHandle.BeaconfoundSemaphore, 0) == pdTRUE) {
 			Serial.print("RSSI: ");
 			Serial.println(taskVals.peripheral.rssi());
@@ -80,11 +73,48 @@ void distanceTask(void * pvParameters) {
 	}
 }
 
-void FindCell(void * pvParameters) {
+void findCellTask(void * pvParameters) {
 	for(;;) {
-		char coordStr0[10], coordStr1[10];
+		char coordStr0[8], coordStr1[8];
 		snprintf(coordStr0, sizeof(coordStr0), "%.2f", taskVals.coords[0]);
 		snprintf(coordStr1, sizeof(coordStr1), "%.2f", taskVals.coords[1]);
-		MRS_wifiPostJson("/findCell", "name, coords", taskVals.name + ", [" + coordStr0 + "," + coordStr1 + "]");
+		// {"name": "robotData.name", "coords":[coordStr0, coordStr1]}
+		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + coordStr0 + ", " + coordStr1 + "]}";
+		if (MRS_wifiPostJson("/findCell", jsonPost) == 200) {
+			// {"name" : "robotData.name"}
+			int tempResult = MRS_wifiGetJson("/getId", "{\"name\":\"" + robotData.name + "\"}").toInt();
+			if ((tempResult != 404) || (tempResult != 500)){
+				robotData.id = tempResult;
+				vTaskSuspend(mrsHandle.findCell);
+			} else {
+				vTaskDelay(100 / portTICK_PERIOD_MS);
+			}
+		} else {
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+		}
+	}
+}
+
+void testConnectionTask(void * pvParameters) {
+	for(;;) {
+
+	}
+}
+
+void getOthersTask(void * pvParameters) {
+	for(;;) {
+		
+	}
+}
+
+void updateLocationTask(void * pvParameters) {
+	for(;;) {
+		
+	}
+}
+
+void getDistanceTask(void * pvParameters) {
+	for(;;) {
+		
 	}
 }

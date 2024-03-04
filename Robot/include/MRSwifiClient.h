@@ -7,6 +7,8 @@
 #include <cstring>
 #include <string>
 
+#include "MRSRobotData.h"
+
 struct MRS_wifi {
     const char* SSID = "";
     const char* PASSWORD = "";
@@ -14,8 +16,8 @@ struct MRS_wifi {
 };
 
 void MRS_SetupConnection();
-void MRS_wifiPostJson(std::string, std::string, std::string);
-String MRS_wifiGetJson(std::string, std::string, std::string);
+int MRS_wifiPostJson(std::string, std::string);
+String MRS_wifiGetJson(std::string, std::string);
 
 extern struct MRS_wifi MRS_wifi;
 

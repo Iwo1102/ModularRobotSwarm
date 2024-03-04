@@ -1,4 +1,4 @@
-#include "MRSwifiClient.h"
+#include "MRSWifiClient.h"
 
 struct MRS_wifi MRS_wifi;
 
@@ -13,13 +13,13 @@ void MRS_SetupConnection() {
     Serial.println("");
     Serial.print("Connected to WiFi network with IP Address: ");
     Serial.println(WiFi.localIP());
- 
-    Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
-}
+ }
 
-void MRS_wifiPostJson(std::string page, std::string valueType, std::string value) {
+int MRS_wifiPostJson(std::string page, std::string postValue) {
     std::string httpRequestData;
     std::string url;
+    int httpResponseCode = 0;
+
     if(WiFi.status()== WL_CONNECTED){
         WiFiClient client;
         HTTPClient http;
@@ -31,25 +31,32 @@ void MRS_wifiPostJson(std::string page, std::string valueType, std::string value
         http.addHeader("Content-Type", "application/json");
 
         // Data to send with HTTP POST
-        //concat string into HTTPRequestData
-        if (page == "/findCell")
-
-            httpRequestData = "{\"name\": \"" + value + "\",\"coords\": []}";
-        if (page == "/updateDistance")
-            httpRequestData = "{\"id\": \"" + value + "\",\"distance\": " + "}";
+        httpRequestData = postValue;
         // Send HTTP POST request
-        int httpResponseCode = http.POST(httpRequestData.c_str());
+        httpResponseCode = http.POST(httpRequestData.c_str());
         Serial.printf("POST HTTP Response code: %d\n", httpResponseCode);
 
         http.end();
     } else {
         Serial.println("WiFi Disconnected");
     }
+    return httpResponseCode;
 }
 
-String MRS_wifiGetJson(std::string page, std::string valueType, std::string value) {
+String MRS_wifiGetJson(std::string page, std::string getValue) {
     std::string url;
-    String json = "{}";
+    String returnJson = "{}";
+    JsonDocument doc;
+
+    DeserializationError error = deserializeJson(doc, getValue);
+
+    // Test if parsing succeeds.
+    if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        return "500";
+    }
+
     if(WiFi.status()== WL_CONNECTED){
         WiFiClient client;
         HTTPClient http;
@@ -59,11 +66,13 @@ String MRS_wifiGetJson(std::string page, std::string valueType, std::string valu
 
 
         if (page == "/TestConnection") {
-            url = url + "?id=" + value + "&type=1";
+            url = url + "?id=" + getValue + "&type=1";
         } else if (page == "/getId") {
-            url = url + "?name=" + value + "&type=1";
+            std::string name = doc["name"];
+            url = url + "?name=" + name + "&type=1";
         } else {
-            return "-1";
+            Serial.printf("Page not found \n");
+            return "404";
         }
 
         http.begin(url.c_str());
@@ -73,13 +82,13 @@ String MRS_wifiGetJson(std::string page, std::string valueType, std::string valu
         if (httpResponseCode > 0) {
             Serial.print("GET HTTP Response code: ");
             Serial.println(httpResponseCode);
-            json = http.getString();
+            returnJson = http.getString();
         }
 
         http.end();
     } else {
         Serial.println("WiFi Disconnected");
-        return "-1";
+        return "500";
     }
-    return json;
+    return returnJson;
 }
