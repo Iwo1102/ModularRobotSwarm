@@ -17,7 +17,7 @@ struct MRS_wifi {
 
 void MRS_SetupConnection();
 int MRS_wifiPostJson(std::string, std::string);
-String MRS_wifiGetJson(std::string, std::string);
+String MRS_wifiGetJson(std::string, std::string = "{}");
 
 extern struct MRS_wifi MRS_wifi;
 

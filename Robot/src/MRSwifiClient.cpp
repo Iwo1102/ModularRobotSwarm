@@ -66,10 +66,11 @@ String MRS_wifiGetJson(std::string page, std::string getValue) {
 
 
         if (page == "/TestConnection") {
-            url = url + "?id=" + getValue + "&type=1";
+            std::string id = doc["id"];
+            url = url + "?id=" + id + "&type=0";
         } else if (page == "/getId") {
             std::string name = doc["name"];
-            url = url + "?name=" + name + "&type=1";
+            url = url + "?name=" + name + "&type=0";
         } else {
             Serial.printf("Page not found \n");
             return "404";

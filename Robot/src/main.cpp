@@ -31,6 +31,7 @@ void setup() {
 	xTaskCreate(distanceTask, "Distance Task", 2 * 1024, NULL, configMAX_PRIORITIES - 3, &mrsHandle.distance);
 	xTaskCreate(findCellTask, "Find Cell Task", 4 * 1024, NULL, configMAX_PRIORITIES - 2, &mrsHandle.findCell);
 	mrsHandle.BeaconfoundSemaphore = xSemaphoreCreateBinary();
+	mrsHandle.testConnectionSemaphore = xSemaphoreCreateBinary();
 }
 
 void loop() {

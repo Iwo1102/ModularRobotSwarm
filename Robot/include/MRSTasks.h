@@ -26,13 +26,18 @@ struct mrsTask_h {
     String beacon1 = "";
     String beacon2 = "";
     uint8_t currentBeacon = 1;
-    float bbDistance = 1, b1Distance, b2Distance;
+    float bbDistance, b1Distance, b2Distance;
     float coords[2] = {0, 0};
 };
 
 struct mrsTaskHandle_h {
-    TaskHandle_t peripheral = NULL, distance = NULL, findCell = NULL;
-    SemaphoreHandle_t BeaconfoundSemaphore = NULL;
+    TaskHandle_t    peripheral = NULL,
+                    distance = NULL,
+                    findCell = NULL,
+                    testConnection = NULL;
+
+    SemaphoreHandle_t   BeaconfoundSemaphore = NULL,
+                        testConnectionSemaphore = NULL;
 };
 
 extern struct mrsTask_h taskVals;

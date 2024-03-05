@@ -75,11 +75,8 @@ void distanceTask(void * pvParameters) {
 
 void findCellTask(void * pvParameters) {
 	for(;;) {
-		char coordStr0[8], coordStr1[8];
-		snprintf(coordStr0, sizeof(coordStr0), "%.2f", taskVals.coords[0]);
-		snprintf(coordStr1, sizeof(coordStr1), "%.2f", taskVals.coords[1]);
 		// {"name": "robotData.name", "coords":[coordStr0, coordStr1]}
-		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + coordStr0 + ", " + coordStr1 + "]}";
+		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + std::to_string(taskVals.coords[0]) + ", " +  std::to_string(taskVals.coords[1]) + "]}";
 		if (MRS_wifiPostJson("/findCell", jsonPost) == 200) {
 			// {"name" : "robotData.name"}
 			int tempResult = MRS_wifiGetJson("/getId", "{\"name\":\"" + robotData.name + "\"}").toInt();
@@ -97,7 +94,14 @@ void findCellTask(void * pvParameters) {
 
 void testConnectionTask(void * pvParameters) {
 	for(;;) {
-
+		if (xSemaphoreTake(mrsHandle.testConnectionSemaphore, 50) == pdTRUE) {
+			// {"id": robotData.id}
+			if ((MRS_wifiGetJson("/TestConnection", "{\"id\": " + std::to_string(robotData.id) + "}").toInt())) {
+				vTaskDelay(5000 / portTICK_PERIOD_MS);
+			} else {
+				vTaskResume(mrsHandle.findCell);
+			}
+		}
 	}
 }
 
@@ -109,12 +113,22 @@ void getOthersTask(void * pvParameters) {
 
 void updateLocationTask(void * pvParameters) {
 	for(;;) {
-		
+		//{"id":robotData.id, }
+		if (MRS_wifiPostJson("/updateLocation", "{}") == 200) {
+
+		}
 	}
 }
 
 void getDistanceTask(void * pvParameters) {
 	for(;;) {
-		
+		// {"id": robotData.id}
+		float response = MRS_wifiGetJson("/getDistance").toFloat();
+		if ((response != 404) || (response != 500)) {
+			taskVals.bbDistance = response;
+			vTaskDelay(1000 / portTICK_PERIOD_MS);
+		} else {
+			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
+		}
 	}
 }
