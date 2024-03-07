@@ -107,16 +107,33 @@ void testConnectionTask(void * pvParameters) {
 
 void getOthersTask(void * pvParameters) {
 	for(;;) {
-		
+		//JsonDocument robots;
+		//{"id":robotData.id}
+		int tempResult = MRS_wifiGetJson("/findOthers", "{\"id\": " + std::to_string(robotData.id) + "}").toInt();
+		if ((tempResult != 404) || (tempResult != 500))
+		{
+			Serial.println(tempResult);
+			//DeserializationError error = deserializeJson(robots, tempResult);
+
+    		// Test if parsing succeeds.
+    		/*if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.f_str());
+			}*/
+		}
+		else
+			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
+		vTaskDelay(50 / portTICK_PERIOD_MS);
 	}
 }
 
 void updateLocationTask(void * pvParameters) {
 	for(;;) {
-		//{"id":robotData.id, }
-		if (MRS_wifiPostJson("/updateLocation", "{}") == 200) {
-
-		}
+		//{"id":robotData.id, "coords": [taskVals.coords[0], taskVals.coords[1]]}
+		if (MRS_wifiPostJson("/updateLocation", "{\"id\":" + std::to_string(robotData.id)  + ","
+												+ "\"coords\": [" + std::to_string(taskVals.coords[0]) + ", " + std::to_string(taskVals.coords[1]) +"]}") != 200)
+			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
+		vTaskDelay(50 / portTICK_PERIOD_MS);
 	}
 }
 

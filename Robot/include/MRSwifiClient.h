@@ -15,6 +15,11 @@ struct MRS_wifi {
     const char* serverName = "";
 };
 
+enum MRS_pages {
+    testConnection,
+    getId
+};
+
 void MRS_SetupConnection();
 int MRS_wifiPostJson(std::string, std::string);
 String MRS_wifiGetJson(std::string, std::string = "{}");

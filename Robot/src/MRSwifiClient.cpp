@@ -64,7 +64,6 @@ String MRS_wifiGetJson(std::string page, std::string getValue) {
         url = MRS_wifi.serverName;
         url = url + page;
 
-
         if (page == "/TestConnection") {
             std::string id = doc["id"];
             url = url + "?id=" + id + "&type=0";

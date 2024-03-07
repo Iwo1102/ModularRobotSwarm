@@ -1,8 +1,6 @@
 /*
   Scan
 */
-#include <Arduino.h>
-#include <ArduinoBLE.h>
 
 #include "MRSTasks.h"
 #include "MRSwifiClient.h"

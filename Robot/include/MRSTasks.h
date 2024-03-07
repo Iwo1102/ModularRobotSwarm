@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <ArduinoBLE.h>
-#include <math.h>
 #include "FreeRTOSConfig.h"
 
 #include "MRSAlgorithms.h"
