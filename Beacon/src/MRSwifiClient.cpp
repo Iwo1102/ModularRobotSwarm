@@ -37,7 +37,7 @@ void MRS_wifiPostJson(std::string page, std::string valueType, std::string value
         if (page == "/findBeaconCell")
             httpRequestData = "{\"name\": \"" + value + "\",\"distance\": " + distance + "}";
         if (page == "/updateDistance")
-            httpRequestData = "{\"id\": \"" + value + "\",\"distance\": " + distance + "}";
+            httpRequestData = "{\"id\": " + value + ",\"distance\": " + distance + "}";
         // Send HTTP POST request
         int httpResponseCode = http.POST(httpRequestData.c_str());
         Serial.printf("POST HTTP Response code: %d\n", httpResponseCode);
