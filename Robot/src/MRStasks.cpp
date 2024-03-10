@@ -75,6 +75,7 @@ void distanceTask(void * pvParameters) {
 
 void findCellTask(void * pvParameters) {
 	for(;;) {
+		Serial.printf("findCell task\n");
 		// {"name": "robotData.name", "coords":[coordStr0, coordStr1]}
 		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + std::to_string(taskVals.coords[0]) + ", " +  std::to_string(taskVals.coords[1]) + "]}";
 		if (MRS_wifiPostJson("/findCell", jsonPost) == 200) {

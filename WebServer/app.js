@@ -45,19 +45,20 @@ setInterval(async () => {
 		let beacons = await Beacon.find({available: {$eq: 0}});
 
 		robots.map(async robot => {
-			if ((Date.now() - robot.lastUpdate) > 20000) {
+			if ((Date.now() - robot.lastUpdate) > 10000) {
 				console.log("Lost connection with robot " + robot.id);
 				await Robot.findOneAndUpdate({id: { $eq: robot.id}}, {available: 1})
 			}
 		})
 		beacons.map(async beacon => {
-			if ((Date.now() - beacon.lastUpdate) > 20000) {
+			if ((Date.now() - beacon.lastUpdate) > 10000) {
 				console.log("Lost connection beacon " + beacon.id);
 				await Beacon.findOneAndUpdate({id: { $eq: beacon.id}}, {available: 1})
 			}
 		})
 	} catch (error) {
 		console.log("error 500: " + error.message)
+		console.log(error.message);
 	}
 }, 5000)
 
@@ -71,6 +72,7 @@ app.post('/findCell', async (req, res) => {
 		num = robots.length;
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 	console.log(num)
 	if(num == 0) {
@@ -87,6 +89,7 @@ app.post('/findCell', async (req, res) => {
 							});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
+			console.log(error.message);
 		}
 	} else {
 		try {
@@ -100,6 +103,7 @@ app.post('/findCell', async (req, res) => {
 										});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
+			console.log(error.message);
 		}
 	}
 });
@@ -133,6 +137,7 @@ app.get('/TestConnection', async (req, res) => {
 		
 	} catch (error){
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 })
 
@@ -152,6 +157,7 @@ app.get('/getId', async (req, res) => {
 		}
 	} catch (error){
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 });
 
@@ -163,6 +169,7 @@ app.post('/updateLocation',  async (req, res) => {
 		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {coords: [req.body.coords[0], req.body.coords[1]], lastUpdate: Date.now()})
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 })
 
@@ -177,6 +184,7 @@ app.get('/findOthers', async (req, res) => {
 
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 })
 
@@ -187,6 +195,7 @@ app.get('/getDistance', async (req, res) => {
 		console.log("distance: " + beacon.distance)
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 })
 
@@ -200,6 +209,7 @@ app.post('/findBeaconCell', async (req, res) => {
 		num = beacons.length;
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 	console.log(num)
 	if(num == 0) {
@@ -215,6 +225,7 @@ app.post('/findBeaconCell', async (req, res) => {
 							});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
+			console.log(error.message);
 		}
 	} else {
 		try {
@@ -227,25 +238,28 @@ app.post('/findBeaconCell', async (req, res) => {
 										});
 		} catch (error) {
 			res.status(500).json({ error: error.message });
+			console.log(error.message);
 		}
 	}
 });
 
 app.post('/updateDistance', async (req, res) => {
-	let callerId = req.body.name;
+	let callerId = req.body.id;
 	let callerDistance = req.body.distance;
 	try {
 		console.log("updating distance of beacon id " + callerId);
-		await Beacon.findOneAndUpdate({id: {$eq: callerId}, distance: callerDistance, lastUpdate: Date.now() });
+		await Beacon.findOneAndUpdate({id: {$eq: callerId}}, { distance: callerDistance, lastUpdate: Date.now() });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
+		console.log(error.message);
 	}
 });
 
 
 
 app.get('/', (req, res) => {
-	res.send("egg");
+	console.log("egg");
+	res.json("egg");
 })
 
 // Start the server

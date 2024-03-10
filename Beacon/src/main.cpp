@@ -3,7 +3,7 @@
 */
 #include <Arduino.h>
 #include <ArduinoBLE.h>
-#include <string.h>
+#include <string>
 #include <stdio.h> 
 
 #include "MRSwifiClient.h"
@@ -104,11 +104,10 @@ float distance = 0;
     	//findCell
   		MRS_wifiPostJson("/findBeaconCell", "name", MEBEACON, distanceStr);
 		id = MRS_wifiGetJson("/getId", "name", MEBEACON).toInt();
+    Serial.printf("id: %d\n", id);
   	} else {
-		char idStr[10];
-		snprintf(idStr, sizeof(idStr), "%d", id);
-		MRS_wifiPostJson("/updateDistance", "id", idStr, distanceStr);
-		if (!MRS_wifiGetJson("/TestConnection", "id", idStr).toInt()){
+		MRS_wifiPostJson("/updateDistance", "id", std::to_string(id), distanceStr);
+		if (!MRS_wifiGetJson("/TestConnection", "id", std::to_string(id)).toInt()){
 			id = -1;
 			Serial.printf("Availability was lost\n");
 		}
