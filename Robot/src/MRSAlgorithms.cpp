@@ -1,4 +1,4 @@
-#include <math.h>
+#include "MRSAlgorithms.h"
 
 /*
 * fixedPower:   Measured RSSI value at 1 metre
