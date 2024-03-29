@@ -190,7 +190,7 @@ app.get('/findOthers', async (req, res) => {
 
 app.get('/getDistance', async (req, res) => {
 	try {
-		let beacon = await Beacon.findOne()
+		let beacon = await Beacon.findOne({id: 0})
 		res.json(beacon.distance)
 		console.log("distance: " + beacon.distance)
 	} catch (error) {
@@ -247,8 +247,11 @@ app.post('/updateDistance', async (req, res) => {
 	let callerId = req.body.id;
 	let callerDistance = req.body.distance;
 	try {
-		console.log("updating distance of beacon id " + callerId);
-		await Beacon.findOneAndUpdate({id: {$eq: callerId}}, { distance: callerDistance, lastUpdate: Date.now() });
+		if (callerDistance != 0) {
+			console.log("updating distance of beacon id " + callerId);
+			await Beacon.findOneAndUpdate({id: {$eq: callerId}}, { distance: callerDistance, lastUpdate: Date.now() });
+			console.log("caller distance: " + callerDistance)
+		}
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 		console.log(error.message);
