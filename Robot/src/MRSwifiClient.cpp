@@ -70,8 +70,9 @@ String MRS_wifiGetJson(std::string page, std::string getValue) {
         } else if (page == "/getId") {
             std::string name = doc["name"];
             url = url + "?name=" + name + "&type=0";
+        } else if (page == "/getDistance") {
         } else {
-            Serial.printf("Page not found \n");
+            Serial.printf("Page not found \r\n");
             return "404";
         }
 

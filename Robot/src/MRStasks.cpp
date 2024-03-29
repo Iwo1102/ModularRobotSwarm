@@ -6,6 +6,7 @@ struct mrsData_h robotData;
 
 void peripheralTask(void * pvParameters) {
 	for (;;) {
+		//Serial.println("Peripheral Task");
 		// check if a peripheral has been discovered
 		taskVals.peripheral = BLE.available();
 
@@ -41,7 +42,8 @@ void peripheralTask(void * pvParameters) {
 void distanceTask(void * pvParameters) {
 	// print the RSSI
 	for(;;) {
-		if(xSemaphoreTake(mrsHandle.BeaconfoundSemaphore, 0) == pdTRUE) {
+		//Serial.println("Distance Task");
+		if(xSemaphoreTake(mrsHandle.BeaconfoundSemaphore, 100) == pdTRUE) {
 			Serial.print("RSSI: ");
 			Serial.println(taskVals.peripheral.rssi());
 			float distance = rssiToDistance(-50, taskVals.peripheral.rssi(), 5);
@@ -51,12 +53,13 @@ void distanceTask(void * pvParameters) {
 			else
 				taskVals.b2Distance = distance;
 			distance = 0;
-
-			//Get the Co-ordinates of the Robot
-			if (taskVals.b1Distance != 0 && taskVals.b2Distance != 0) {
-				getRobotCoords(taskVals.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
-				Serial.printf("co-ordinates: %.2f, %.2f\r\n", taskVals.coords[0], taskVals.coords[1]);
-			}
+			if (xSemaphoreTake(mrsHandle.getDistanceSemaphore, 0) == pdTRUE) {
+				//Get the Co-ordinates of the Robot
+				if (taskVals.b1Distance != 0 && taskVals.b2Distance != 0) {
+					getRobotCoords(taskVals.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
+					Serial.printf("co-ordinates: %.2f, %.2f\r\n", taskVals.coords[0], taskVals.coords[1]);
+				}
+			}	
 			//switch beacon to scan
 			Serial.println();
 			if (taskVals.currentBeacon == 1) {
@@ -75,6 +78,7 @@ void distanceTask(void * pvParameters) {
 
 void findCellTask(void * pvParameters) {
 	for(;;) {
+		Serial.println("FindCellTask");
 		// {"name": "robotData.name", "coords":[coordStr0, coordStr1]}
 		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + std::to_string(taskVals.coords[0]) + ", " +  std::to_string(taskVals.coords[1]) + "]}";
 		if (MRS_wifiPostJson("/findCell", jsonPost) == 200) {
@@ -82,7 +86,7 @@ void findCellTask(void * pvParameters) {
 			int tempResult = MRS_wifiGetJson("/getId", "{\"name\":\"" + robotData.name + "\"}").toInt();
 			if ((tempResult != 404) || (tempResult != 500)){
 				robotData.id = tempResult;
-				vTaskSuspend(mrsHandle.findCell);
+				vTaskSuspend(NULL);
 			} else {
 				vTaskDelay(100 / portTICK_PERIOD_MS);
 			}
@@ -94,6 +98,7 @@ void findCellTask(void * pvParameters) {
 
 void testConnectionTask(void * pvParameters) {
 	for(;;) {
+		Serial.printf("Test Connection Task\r\n");
 		if (xSemaphoreTake(mrsHandle.testConnectionSemaphore, 50) == pdTRUE) {
 			// {"id": robotData.id}
 			if ((MRS_wifiGetJson("/TestConnection", "{\"id\": " + std::to_string(robotData.id) + "}").toInt())) {
@@ -105,30 +110,22 @@ void testConnectionTask(void * pvParameters) {
 	}
 }
 
-void getOthersTask(void * pvParameters) {
+/*void getOthersTask(void * pvParameters) {
 	for(;;) {
 		//JsonDocument robots;
 		//{"id":robotData.id}
 		int tempResult = MRS_wifiGetJson("/findOthers", "{\"id\": " + std::to_string(robotData.id) + "}").toInt();
 		if ((tempResult != 404) || (tempResult != 500))
-		{
 			Serial.println(tempResult);
-			//DeserializationError error = deserializeJson(robots, tempResult);
-
-    		// Test if parsing succeeds.
-    		/*if (error) {
-				Serial.print(F("deserializeJson() failed: "));
-				Serial.println(error.f_str());
-			}*/
-		}
 		else
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
 		vTaskDelay(50 / portTICK_PERIOD_MS);
 	}
-}
+} */
 
 void updateLocationTask(void * pvParameters) {
 	for(;;) {
+		Serial.printf("Update Location Task\r\n");
 		//{"id":robotData.id, "coords": [taskVals.coords[0], taskVals.coords[1]]}
 		if (MRS_wifiPostJson("/updateLocation", "{\"id\":" + std::to_string(robotData.id)  + ","
 												+ "\"coords\": [" + std::to_string(taskVals.coords[0]) + ", " + std::to_string(taskVals.coords[1]) +"]}") != 200)
@@ -137,12 +134,14 @@ void updateLocationTask(void * pvParameters) {
 	}
 }
 
-void getDistanceTask(void * pvParameters) {
+void getBeaconDistanceTask(void * pvParameters) {
 	for(;;) {
+		Serial.printf("getBeaconDistance Task\r\n");
 		// {"id": robotData.id}
 		float response = MRS_wifiGetJson("/getDistance").toFloat();
 		if ((response != 404) || (response != 500)) {
 			taskVals.bbDistance = response;
+			xSemaphoreGive(mrsHandle.getDistanceSemaphore);
 			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		} else {
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);

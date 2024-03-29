@@ -25,11 +25,16 @@ void setup() {
 	// start scanning for peripheral
 	BLE.scanForName("beacon1");
 
-	xTaskCreate(peripheralTask, "Peripheral Task", 2 * 1024, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
-	xTaskCreate(distanceTask, "Distance Task", 2 * 1024, NULL, configMAX_PRIORITIES - 3, &mrsHandle.distance);
-	xTaskCreate(findCellTask, "Find Cell Task", 4 * 1024, NULL, configMAX_PRIORITIES - 2, &mrsHandle.findCell);
 	mrsHandle.BeaconfoundSemaphore = xSemaphoreCreateBinary();
 	mrsHandle.testConnectionSemaphore = xSemaphoreCreateBinary();
+	mrsHandle.getDistanceSemaphore = xSemaphoreCreateBinary();
+
+	xTaskCreate(peripheralTask, "Peripheral Task", 2 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
+	xTaskCreate(distanceTask, "Distance Task", 2 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance);
+	xTaskCreate(findCellTask, "Find Cell Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 5, &mrsHandle.findCell);
+	xTaskCreate(testConnectionTask, "Test Connection Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.testConnection);
+	xTaskCreate(getBeaconDistanceTask, "Beacon-Beacon distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getBeaconDistance);
+	xTaskCreate(updateLocationTask, "Update Location Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.updateLocation);
 }
 
 void loop() {
