@@ -8,12 +8,17 @@
 #include "MRSwifiClient.h"
 
 #define INTERVAL_TO_MS(x) (x / 0.625)
-const std::string MEBEACON = "beacon2";
-const std::string YOUBEACON = "beacon1";
+const std::string MEBEACON = "beacon1";
+const std::string YOUBEACON = "beacon2";
+const uint8_t RSSIAVGSIZE = 10;
 
 bool adv_scan = 1;
+bool calcDistaceFlag = 0;
 
 int id = -1;
+int16_t rssiValues[RSSIAVGSIZE] = {0};
+uint8_t rssiCount = 0;
+
 
 BLEService beaconService("19B10000-F512-0A71-54B1-D104768A1214");
 BLECharacteristic rssiCharacterisitc("19B10000-F512-0A71-54B1-D104768A1214", BLERead | BLEWrite | BLEBroadcast, "0");
@@ -77,10 +82,30 @@ float distance = 0;
       Serial.println(peripheral.rssi());
       char rssi[5];
       sprintf(rssi, "%d", peripheral.rssi());
-      float power = (((float)-37 + (float)abs(peripheral.rssi())) / ((float)10 * (float)5));
-      distance = pow(10, power);
-      Serial.printf("Distance: %.2fm\r\n", distance);
 
+      rssiValues[rssiCount] = peripheral.rssi();
+      rssiCount++;
+      if (rssiCount == RSSIAVGSIZE)
+        rssiCount = 0;
+
+      for (int i = 0; i < RSSIAVGSIZE; i++) {
+        if (rssiValues[i] == 0) {
+          calcDistaceFlag = 0;
+          break;
+        } else {
+          calcDistaceFlag = 1;
+        }
+      }
+      if (calcDistaceFlag) {
+        float avg = 0;
+        for (int i = 0; i < RSSIAVGSIZE; i++)
+          avg += rssiValues[i];
+        avg = avg / RSSIAVGSIZE;
+        float power = (((float)-44.6 + (float)abs(avg)) / ((float)10 * (float)4));
+        distance = pow(10, power);
+        Serial.printf("Distance: %.2fm\r\n", distance);
+      }
+      
       rssiCharacterisitc.writeValue(rssi);
       if (rssiCharacterisitc.broadcast())
         Serial.printf("Broadcast Successful\r\n");
@@ -95,21 +120,23 @@ float distance = 0;
 
     adv_scan = 1;
     BLE.scanForName(YOUBEACON.c_str());
-    delay(100);
+    delay(10);
   }
-	char distanceStr[10];
-	snprintf(distanceStr, sizeof(distanceStr), "%f", distance);
+  if (calcDistaceFlag) {
+    char distanceStr[10];
+	  snprintf(distanceStr, sizeof(distanceStr), "%f", distance);
   	if(id == -1) {
     	//findCell
   		MRS_wifiPostJson("/findBeaconCell", "name", MEBEACON, distanceStr);
-		id = MRS_wifiGetJson("/getId", "name", MEBEACON).toInt();
-    Serial.printf("id: %d\n", id);
+		  id = MRS_wifiGetJson("/getId", "name", MEBEACON).toInt();
+      Serial.printf("id: %d\n", id);
   	} else {
-		MRS_wifiPostJson("/updateDistance", "id", std::to_string(id), distanceStr);
-		if (!MRS_wifiGetJson("/TestConnection", "id", std::to_string(id)).toInt()){
-			id = -1;
-			Serial.printf("Availability was lost\n");
-		}
-	}
-	delay(1000);
+		  MRS_wifiPostJson("/updateDistance", "id", std::to_string(id), distanceStr);
+		  if (!MRS_wifiGetJson("/TestConnection", "id", std::to_string(id)).toInt()){
+			  id = -1;
+			  Serial.printf("Availability was lost\n");
+	    }
+	  }
+  }
+	
 }
