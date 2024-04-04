@@ -28,7 +28,6 @@ struct mrsTask_h {
     String beacon2 = "";
     uint8_t currentBeacon = 1;
     float bbDistance = 1, b1Distance, b2Distance;
-    float coords[2] = {0, 0};
 };
 
 struct mrsTaskHandle_h {
@@ -37,7 +36,8 @@ struct mrsTaskHandle_h {
                     findCell = NULL,
                     testConnection = NULL,
                     getBeaconDistance = NULL,
-                    updateLocation = NULL;
+                    updateLocation = NULL,
+                    getOthers = NULL;
 
     SemaphoreHandle_t   BeaconfoundSemaphore = NULL,
                         testConnectionSemaphore = NULL,

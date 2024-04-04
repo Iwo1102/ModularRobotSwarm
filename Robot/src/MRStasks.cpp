@@ -2,8 +2,10 @@
 
 struct mrsTask_h taskVals;
 struct mrsTaskHandle_h  mrsHandle;
-struct mrsData_h robotData;
+struct mrsData_h thisRobot;
 struct mrsAlgo_h algoVals;
+
+mrsData_h otherRobots[4];
 
 void peripheralTask(void * pvParameters) {
 	for (;;) {
@@ -103,8 +105,8 @@ void distanceTask(void * pvParameters) {
 				if (xSemaphoreTake(mrsHandle.getDistanceSemaphore, 0) == pdTRUE) {
 					//Get the Co-ordinates of the Robot
 					if (taskVals.b1Distance != 0 && taskVals.b2Distance != 0) {
-						getRobotCoords(taskVals.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
-						Serial.printf("co-ordinates: %.2f, %.2f\r\n", taskVals.coords[0], taskVals.coords[1]);
+						getRobotCoords(thisRobot.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
+						Serial.printf("co-ordinates: %.2f, %.2f\r\n", thisRobot.coords[0], thisRobot.coords[1]);
 					}
 				}
 			}
@@ -127,13 +129,13 @@ void distanceTask(void * pvParameters) {
 void findCellTask(void * pvParameters) {
 	for(;;) {
 		Serial.println("FindCellTask");
-		// {"name": "robotData.name", "coords":[coordStr0, coordStr1]}
-		std::string jsonPost = "{\"name\":\"" + robotData.name + "\", \"coords\":[" + std::to_string(taskVals.coords[0]) + ", " +  std::to_string(taskVals.coords[1]) + "]}";
+		// {"name": "thisRobot.name", "coords":[thisRobot.coords[0], thisRobot.coords[1]]}
+		std::string jsonPost = "{\"name\":\"" + thisRobot.name + "\", \"coords\":[" + std::to_string(thisRobot.coords[0]) + ", " +  std::to_string(thisRobot.coords[1]) + "]}";
 		if (MRS_wifiPostJson("/findCell", jsonPost) == 200) {
-			// {"name" : "robotData.name"}
-			int tempResult = MRS_wifiGetJson("/getId", "{\"name\":\"" + robotData.name + "\"}").toInt();
+			// {"name" : "thisRobot.name"}
+			int tempResult = MRS_wifiGetJson("/getId", "{\"name\":\"" + thisRobot.name + "\"}").toInt();
 			if ((tempResult != 404) || (tempResult != 500)){
-				robotData.id = tempResult;
+				thisRobot.id = tempResult;
 				vTaskSuspend(NULL);
 			} else {
 				vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -148,8 +150,8 @@ void testConnectionTask(void * pvParameters) {
 	for(;;) {
 		Serial.printf("Test Connection Task\r\n");
 		if (xSemaphoreTake(mrsHandle.testConnectionSemaphore, 50) == pdTRUE) {
-			// {"id": robotData.id}
-			if ((MRS_wifiGetJson("/TestConnection", "{\"id\": " + std::to_string(robotData.id) + "}").toInt())) {
+			// {"id": thisRobot.id}
+			if ((MRS_wifiGetJson("/TestConnection", "{\"id\": " + std::to_string(thisRobot.id) + "}").toInt())) {
 				vTaskDelay(5000 / portTICK_PERIOD_MS);
 			} else {
 				vTaskResume(mrsHandle.findCell);
@@ -159,25 +161,56 @@ void testConnectionTask(void * pvParameters) {
 	}
 }
 
-/*void getOthersTask(void * pvParameters) {
+void getOthersTask(void * pvParameters) {
 	for(;;) {
-		//JsonDocument robots;
-		//{"id":robotData.id}
-		int tempResult = MRS_wifiGetJson("/findOthers", "{\"id\": " + std::to_string(robotData.id) + "}").toInt();
-		if ((tempResult != 404) || (tempResult != 500))
-			Serial.println(tempResult);
+		Serial.printf("Get other Robots Task\r\n");
+		//{"id":thisRobot.id}
+		String tempResult = MRS_wifiGetJson("/findOthers", "{\"id\": " + std::to_string(thisRobot.id) + "}");
+		if ((tempResult.toInt() != 404) || (tempResult.toInt() != 500)) {
+
+			JsonDocument doc;
+			DeserializationError error = deserializeJson(doc, tempResult);
+
+			// Test if parsing fails.
+			if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.f_str());
+			} else {
+				JsonArray robots = doc.as<JsonArray>();
+				int i = 0;
+				for(JsonObject robot : robots) {
+
+					std::string robotName = robot["name"].as<std::string>();
+					otherRobots[i].name = robotName;
+					//otherRobots[i].name[robotName.length()] = '\0';
+					Serial.printf("Test name:");
+					Serial.println(robotName.c_str());
+
+					int robotId = robot["id"].as<int>();
+					otherRobots[i].id = robotId;
+
+					JsonArray coords = robot["coords"];
+					otherRobots[i].coords[0] = coords[0].as<float>();
+					otherRobots[i].coords[1] = coords[1].as<float>();
+
+					Serial.printf("Robot:\r\nname: %s\r\nid: %d\r\ncoords: [%d, %d]\r\n",
+									otherRobots[i].name.c_str(), otherRobots[i].id, otherRobots[i].coords[0], otherRobots[i].coords[1]);
+					i++;
+				}
+			}
+		}
 		else
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+		vTaskDelay(200 / portTICK_PERIOD_MS);
 	}
-} */
+} 
 
 void updateLocationTask(void * pvParameters) {
 	for(;;) {
 		Serial.printf("Update Location Task\r\n");
-		//{"id":robotData.id, "coords": [taskVals.coords[0], taskVals.coords[1]]}
-		if (MRS_wifiPostJson("/updateLocation", "{\"id\":" + std::to_string(robotData.id)  + ","
-												+ "\"coords\": [" + std::to_string(taskVals.coords[0]) + ", " + std::to_string(taskVals.coords[1]) +"]}") != 200)
+		//{"id":thisRobot.id, "coords": [thisRobot.coords[0], thisRobot.coords[1]]}
+		if (MRS_wifiPostJson("/updateLocation", "{\"id\":" + std::to_string(thisRobot.id)  + ","
+												+ "\"coords\": [" + std::to_string(thisRobot.coords[0]) + ", " + std::to_string(thisRobot.coords[1]) +"]}") != 200)
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
 		vTaskDelay(250 / portTICK_PERIOD_MS);
 	}
@@ -186,7 +219,7 @@ void updateLocationTask(void * pvParameters) {
 void getBeaconDistanceTask(void * pvParameters) {
 	for(;;) {
 		Serial.printf("getBeaconDistance Task\r\n");
-		// {"id": robotData.id}
+		// {"id": thisRobot.id}
 		float response = MRS_wifiGetJson("/getDistance").toFloat();
 		if ((response != 404) || (response != 500)) {
 			taskVals.bbDistance = response;

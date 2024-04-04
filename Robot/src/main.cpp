@@ -18,6 +18,8 @@ void setup() {
 		while (1);
 	}
 
+	thisRobot.name = "Robot3";
+
 	Serial.println("Bluetooth® Low Energy Central scan");
 	Serial.print("Device Adress: ");
 	Serial.println(BLE.address());
@@ -32,9 +34,10 @@ void setup() {
 	xTaskCreate(peripheralTask, "Peripheral Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
 	xTaskCreate(distanceTask, "Distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance);
 	xTaskCreate(findCellTask, "Find Cell Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 5, &mrsHandle.findCell);
-	xTaskCreate(testConnectionTask, "Test Connection Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.testConnection);
+	xTaskCreate(testConnectionTask, "Test Connection Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 3, &mrsHandle.testConnection);
 	xTaskCreate(getBeaconDistanceTask, "Beacon-Beacon distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getBeaconDistance);
 	xTaskCreate(updateLocationTask, "Update Location Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.updateLocation);
+	xTaskCreate(getOthersTask, "Get Other Robots Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getOthers);
 }
 
 void loop() {
