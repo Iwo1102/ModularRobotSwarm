@@ -8,8 +8,8 @@
 #include "MRSwifiClient.h"
 
 #define INTERVAL_TO_MS(x) (x / 0.625)
-const std::string MEBEACON = "beacon1";
-const std::string YOUBEACON = "beacon2";
+const std::string MEBEACON = "beacon2";
+const std::string YOUBEACON = "beacon1";
 const uint8_t RSSIAVGSIZE = 10;
 
 bool adv_scan = 1;

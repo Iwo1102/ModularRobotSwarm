@@ -102,7 +102,9 @@ void distanceTask(void * pvParameters) {
 				else
 					taskVals.b2Distance = distance;
 				distance = 0;
-				if (xSemaphoreTake(mrsHandle.getDistanceSemaphore, 0) == pdTRUE) {
+				EventBits_t eventBits;
+				eventBits = xEventGroupWaitBits(mrsHandle.distanceEvent, calcCoordsBit, pdFALSE, pdTRUE, pdMS_TO_TICKS(50));
+				if (eventBits & calcCoordsBit) {
 					//Get the Co-ordinates of the Robot
 					if (taskVals.b1Distance != 0 && taskVals.b2Distance != 0) {
 						getRobotCoords(thisRobot.coords, taskVals.b1Distance, taskVals.b2Distance, taskVals.bbDistance);
@@ -179,12 +181,8 @@ void getOthersTask(void * pvParameters) {
 				JsonArray robots = doc.as<JsonArray>();
 				int i = 0;
 				for(JsonObject robot : robots) {
-
 					std::string robotName = robot["name"].as<std::string>();
 					otherRobots[i].name = robotName;
-					//otherRobots[i].name[robotName.length()] = '\0';
-					Serial.printf("Test name:");
-					Serial.println(robotName.c_str());
 
 					int robotId = robot["id"].as<int>();
 					otherRobots[i].id = robotId;
@@ -193,10 +191,11 @@ void getOthersTask(void * pvParameters) {
 					otherRobots[i].coords[0] = coords[0].as<float>();
 					otherRobots[i].coords[1] = coords[1].as<float>();
 
-					Serial.printf("Robot:\r\nname: %s\r\nid: %d\r\ncoords: [%d, %d]\r\n",
+					Serial.printf("Robot:\r\nname: %s\r\nid: %d\r\ncoords: [%.2f, %.2f]\r\n",
 									otherRobots[i].name.c_str(), otherRobots[i].id, otherRobots[i].coords[0], otherRobots[i].coords[1]);
 					i++;
 				}
+				xSemaphoreGive(mrsHandle.checkProximitySemaphore);
 			}
 		}
 		else
@@ -223,7 +222,7 @@ void getBeaconDistanceTask(void * pvParameters) {
 		float response = MRS_wifiGetJson("/getDistance").toFloat();
 		if ((response != 404) || (response != 500)) {
 			taskVals.bbDistance = response;
-			xSemaphoreGive(mrsHandle.getDistanceSemaphore);
+			xEventGroupSetBits(mrsHandle.distanceEvent, calcCoordsBit);
 			vTaskDelay(10000 / portTICK_PERIOD_MS);
 		} else {
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
@@ -231,3 +230,18 @@ void getBeaconDistanceTask(void * pvParameters) {
 		}
 	}
 }
+
+void checkProximityTask(void * pvParameters) {
+	for(;;) {
+		if (xSemaphoreTake(mrsHandle.checkProximitySemaphore, 50) == pdTRUE) {
+			for (int i = 0; i < swarmSize; i++) {
+				//Check if too close to other robots
+				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.4) {
+					Serial.printf("Robot too close to robot %s", otherRobots[i].name.c_str());
+				}
+			}
+		}
+		vTaskDelay(200 / portTICK_PERIOD_MS);
+	}
+}
+

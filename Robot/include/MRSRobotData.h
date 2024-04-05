@@ -3,6 +3,8 @@
 
 #include <string>
 
+const int swarmSize = 2;
+
 struct mrsData_h {
     std::string name = "";
     float coords[2] = {0, 0};
