@@ -21,11 +21,11 @@ float rssiToDistance(float fixedPower, float rssi, float environent) {
 void getRobotCoords(float* coordBuf, float b1r, float b2r, float bb) {
     float temp = pow(bb, 2) + pow(b1r, 2) - pow(b2r, 2);
 	coordBuf[0] = temp / (2 * bb);
-	coordBuf[1] = (pow(b1r, 2) - pow(coordBuf[0], 2));
-    if (coordBuf[1] < 0) {
-        coordBuf[1] = sqrt(abs(coordBuf[1]));
-        coordBuf[1] = coordBuf[1] * -1;
-    } else {
-        coordBuf[1] = sqrt(coordBuf[1]);
-    }
+	coordBuf[1] = sqrt(fabs(pow(b1r, 2)) - pow(coordBuf[0], 2));
+   if (b1r >= b2r)
+        coordBuf[1] *= -1;
+}
+
+float distanceDiff(float coord1Buff[2], float coord2Buff[2]) {
+    return sqrt(pow((coord2Buff[0] - coord1Buff[0]), 2) + pow((coord2Buff[1] - coord1Buff[1]), 2));
 }

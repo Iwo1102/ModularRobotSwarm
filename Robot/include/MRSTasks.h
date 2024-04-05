@@ -11,6 +11,8 @@
 
 #define KILOBYTE 1024
 
+#define calcCoordsBit (1 << 0)
+
 //BLE Tasks
 void peripheralTask(void * pvParameters);
 void distanceTask(void * pvParameters);
@@ -21,6 +23,7 @@ void testConnectionTask(void * pvParameters);
 void getOthersTask(void * pvParameters);
 void updateLocationTask(void * pvParameters);
 void getBeaconDistanceTask(void * pvParameters);
+void checkProximityTask(void * pvParameters);
 
 struct mrsTask_h {
     BLEDevice peripheral;
@@ -28,7 +31,6 @@ struct mrsTask_h {
     String beacon2 = "";
     uint8_t currentBeacon = 1;
     float bbDistance = 1, b1Distance, b2Distance;
-    float coords[2] = {0, 0};
 };
 
 struct mrsTaskHandle_h {
@@ -37,11 +39,15 @@ struct mrsTaskHandle_h {
                     findCell = NULL,
                     testConnection = NULL,
                     getBeaconDistance = NULL,
-                    updateLocation = NULL;
+                    updateLocation = NULL,
+                    getOthers = NULL,
+                    checkProximity = NULL;
 
     SemaphoreHandle_t   BeaconfoundSemaphore = NULL,
                         testConnectionSemaphore = NULL,
-                        getDistanceSemaphore = NULL;
+                        getDistanceSemaphore = NULL,
+                        checkProximitySemaphore = NULL;
+    EventGroupHandle_t  distanceEvent = NULL;
 };
 
 extern struct mrsTask_h taskVals;

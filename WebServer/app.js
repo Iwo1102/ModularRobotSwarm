@@ -179,7 +179,7 @@ app.get('/findOthers', async (req, res) => {
 	try{
 		console.log("Finding other robots for robot " + callerId)
 		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
-		let robots = await Robot.find({available: {$eq: 0}})
+		let robots = await Robot.find({available: {$eq: 0}, id: {$ne: callerId}})
 		res.json(robots)
 
 	} catch (error) {
