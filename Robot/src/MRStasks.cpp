@@ -314,6 +314,7 @@ void completeOrdersTask(void * pvParameters) {
 				default:
 					Serial.printf("Unknown Order\r\n");
 			}
+			MRS_wifiPostJson("/completeOrder", "{\"id\":" +  std::to_string(thisRobot.id) + "}");
 		}
 	}
 }

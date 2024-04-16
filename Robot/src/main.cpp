@@ -43,7 +43,7 @@ void setup() {
 	xTaskCreate(getOthersTask, "Get Other Robots Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getOthers);
 	xTaskCreate(checkProximityTask, "Check Proximity Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 3, &mrsHandle.checkProximity);
 	xTaskCreate(getOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.getOrders);
-	//xTaskCreate(completeOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.completeOrders);
+	xTaskCreate(completeOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.completeOrders);
 
 }
 

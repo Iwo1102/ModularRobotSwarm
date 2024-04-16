@@ -98,7 +98,7 @@ app.post('/findCell', async (req, res) => {
 											name: req.body.name,
 											available: 0,
 											coords: [req.body.coords[0], req.body.coords[1]],
-											orders: [0],
+											orders: [],
 											lastUpdate: Date.now()
 										});
 		} catch (error) {
@@ -316,7 +316,8 @@ app.post('/completeOrder', async (req, res) => {
         let robot = await Robot.findOne({ id: callerId });
         if (robot) {
             await Robot.findOneAndUpdate( {id: callerId}, {$pop: {orders: -1}, $set: {lastUpdate: Date.now()}});
-            res.send(robot);
+			//console.log("order " + robot.orders[0].code + "completed")
+            res.status(200).send();
         } else {
             res.status(404).json({ message: "Robot Not Found" });
         }
