@@ -32,6 +32,7 @@ void setup() {
 	mrsHandle.getDistanceSemaphore = xSemaphoreCreateBinary();
 	mrsHandle.checkProximitySemaphore = xSemaphoreCreateBinary();
 	mrsHandle.distanceEvent = xEventGroupCreate();
+	mrsHandle.orderQueue = xQueueCreate(20, sizeof(uint8_t));
 
 	xTaskCreate(peripheralTask, "Peripheral Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
 	xTaskCreate(distanceTask, "Distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance);
@@ -41,6 +42,9 @@ void setup() {
 	xTaskCreate(updateLocationTask, "Update Location Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.updateLocation);
 	xTaskCreate(getOthersTask, "Get Other Robots Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getOthers);
 	xTaskCreate(checkProximityTask, "Check Proximity Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 3, &mrsHandle.checkProximity);
+	xTaskCreate(getOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.getOrders);
+	xTaskCreate(completeOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.completeOrders);
+
 }
 
 void loop() {

@@ -24,6 +24,8 @@ void getOthersTask(void * pvParameters);
 void updateLocationTask(void * pvParameters);
 void getBeaconDistanceTask(void * pvParameters);
 void checkProximityTask(void * pvParameters);
+void getOrdersTask(void * pvParameters);
+void completeOrdersTask(void * pvParameters);
 
 struct mrsTask_h {
     BLEDevice peripheral;
@@ -41,13 +43,28 @@ struct mrsTaskHandle_h {
                     getBeaconDistance = NULL,
                     updateLocation = NULL,
                     getOthers = NULL,
-                    checkProximity = NULL;
+                    checkProximity = NULL,
+                    getOrders = NULL,
+                    completeOrders = NULL;
 
     SemaphoreHandle_t   BeaconfoundSemaphore = NULL,
                         testConnectionSemaphore = NULL,
                         getDistanceSemaphore = NULL,
                         checkProximitySemaphore = NULL;
     EventGroupHandle_t  distanceEvent = NULL;
+    QueueHandle_t orderQueue = NULL;
+};
+
+enum mrsOrders_h {
+    forward = 1,
+    backward,
+    left,
+    right,
+    sweep,
+    perimiter,
+    scan,
+    scan_sweep,
+    scan_perimiter
 };
 
 extern struct mrsTask_h taskVals;

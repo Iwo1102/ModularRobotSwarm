@@ -74,6 +74,9 @@ String MRS_wifiGetJson(std::string page, std::string getValue) {
         else if (page == "/findOthers") {
             std::string id = doc["id"];
             url = url + "?id=" + id;
+        } else if (page == "/getOrders") {
+            std::string id = doc["id"];
+            url = url + "?id=" + id;
         } else {
             Serial.printf("Page not found \r\n");
             return "404";

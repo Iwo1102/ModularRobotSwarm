@@ -18,7 +18,7 @@ const robotSchema = new mongoose.Schema({
 	name: String,
 	coords: [Number],
 	available: Boolean,
-	orders: [Number],
+	orders: [{code: Number, sent: Boolean}],
 	lastUpdate: Number
 
 });
@@ -84,7 +84,7 @@ app.post('/findCell', async (req, res) => {
 								name: req.body.name, 
 								coords: [req.body.coords[0], req.body.coords[1]], 
 								available: 0, 
-								orders: [0],
+								orders: [],
 								lastUpdate: Date.now()
 							});
 		} catch (error) {
@@ -98,7 +98,7 @@ app.post('/findCell', async (req, res) => {
 											name: req.body.name,
 											available: 0,
 											coords: [req.body.coords[0], req.body.coords[1]],
-											orders: [0],
+											orders: [],
 											lastUpdate: Date.now()
 										});
 		} catch (error) {
@@ -258,6 +258,74 @@ app.post('/updateDistance', async (req, res) => {
 	}
 });
 
+app.post('/sendOrder', async (req, res) => {
+	let callerName = req.body.name;
+	let callerOrders = req.body.orders
+	console.log("Caller Orders length:", callerOrders.length);
+	try {
+		let robot = await Robot.findOne({name: {$eq: callerName}})
+		console.log("robot name: " + robot.name + " available: " + robot.available)
+		if (robot != null) {
+			if (!robot.available) {
+				for (let i = 0; i < callerOrders.length; i++) {
+					await Robot.findOneAndUpdate({name: {$eq: callerName}}, {$push: {orders: {code: callerOrders[i], sent: 0}}});
+					console.log("Orders sent")
+				}
+				res.status(200).json({ message: "Orders sent successfully" });
+			} else {
+				console.log("Robot Not Available")
+				res.status(400).json({ message: "Robot Not Available" });
+			}
+		} else {
+			console.log("Robot Not found");
+			res.status(404).json({ message: "Robot Not Found" });
+		}
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+		console.log(error.message);
+	}
+});
+
+app.get('/getOrders', async (req, res) => {
+	try {
+		let callerId = req.query.id;
+		let robot = await Robot.findOne({id: {$eq: callerId}})
+		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
+		let orders = [];
+		for (let i = 0; i < robot.orders.length; i++) {
+			if (!robot.orders[i].sent) {
+				console.log(robot.orders[i].code)
+				orders.push(robot.orders[i].code);
+				await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now(),  $set: {[`orders.${i}.sent`]: true}})		
+			} else {
+				orders.push(0);
+			}
+		}
+
+		console.log("Orders sent:" + orders);
+		res.send(orders)
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+		console.log(error.message);
+	}
+});
+
+app.post('/completeOrder', async (req, res) => {
+	try {
+        let callerId = req.body.id;
+        let robot = await Robot.findOne({ id: callerId });
+        if (robot) {
+            await Robot.findOneAndUpdate( {id: callerId}, {$pop: {orders: -1}, $set: {lastUpdate: Date.now()}});
+			//console.log("order " + robot.orders[0].code + "completed")
+            res.status(200).send();
+        } else {
+            res.status(404).json({ message: "Robot Not Found" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log(error.message);
+    }
+});
 
 
 app.get('/', (req, res) => {
