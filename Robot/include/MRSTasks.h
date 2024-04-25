@@ -9,7 +9,8 @@
 #include "MRSWifiClient.h"
 #include "MRSRobotData.h"
 
-#define KILOBYTE 1024
+const int KILOBYTE = 1024;
+const int ORDERLENGTH = 20;
 
 #define calcCoordsBit (1 << 0)
 
@@ -53,6 +54,11 @@ struct mrsTaskHandle_h {
                         checkProximitySemaphore = NULL;
     EventGroupHandle_t  distanceEvent = NULL;
     QueueHandle_t orderQueue = NULL;
+};
+
+struct mrsOrdersStruct_h {
+    int order;
+    int distance;
 };
 
 enum mrsOrders_h {

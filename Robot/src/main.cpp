@@ -4,6 +4,7 @@
 
 #include "MRSTasks.h"
 #include "MRSwifiClient.h"
+#include "MRSmotors.h"
 
 void setup() {
 	Serial.begin(115200);
@@ -17,6 +18,24 @@ void setup() {
 
 		while (1);
 	}
+
+	gpioInit();
+
+	Serial.println("Moving forward");
+	motorForward();
+	delay(2000);
+	Serial.println("Moving backward");
+	motorBackward();
+	delay(2000);
+	Serial.println("Moving left");
+	motorLeft();
+	delay(2000);
+	Serial.println("Moving right");
+	motorRight();
+	delay(2000);
+	Serial.println("stopping");
+	motorStop();
+	delay(2000);
 
 	thisRobot.name = "Robot2";
 

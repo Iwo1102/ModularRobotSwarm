@@ -17,4 +17,5 @@ extern struct mrsAlgo_h algoVals;
 float rssiToDistance(float fixedPower, float rssi, float environent);
 void getRobotCoords(float* coordBuf, float b1r, float b2r, float bb);
 float distanceDiff(float coord1Buff[2], float coord2Buff[2]);
+float edgeDistance(float line1Coords[2], float line2Coords[2], float robotCoords[2]);
 #endif

@@ -38,7 +38,7 @@ void peripheralTask(void * pvParameters) {
 			xSemaphoreGive(mrsHandle.BeaconfoundSemaphore);
 			vTaskSuspend(mrsHandle.peripheral);
 		}
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -125,6 +125,7 @@ void distanceTask(void * pvParameters) {
 				}
 		} 
 		vTaskResume(mrsHandle.peripheral);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -140,10 +141,10 @@ void findCellTask(void * pvParameters) {
 				thisRobot.id = tempResult;
 				vTaskSuspend(NULL);
 			} else {
-				vTaskDelay(100 / portTICK_PERIOD_MS);
+				vTaskDelay(1000 / portTICK_PERIOD_MS);
 			}
 		} else {
-			vTaskDelay(100 / portTICK_PERIOD_MS);
+			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		}
 	}
 }
@@ -200,7 +201,7 @@ void getOthersTask(void * pvParameters) {
 		}
 		else
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
 } 
 
@@ -226,7 +227,7 @@ void getBeaconDistanceTask(void * pvParameters) {
 			vTaskDelay(10000 / portTICK_PERIOD_MS);
 		} else {
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
-			vTaskDelay(100 / portTICK_PERIOD_MS);
+			vTaskDelay(10000 / portTICK_PERIOD_MS);
 		}
 	}
 }
@@ -236,12 +237,24 @@ void checkProximityTask(void * pvParameters) {
 		if (xSemaphoreTake(mrsHandle.checkProximitySemaphore, 50) == pdTRUE) {
 			for (int i = 0; i < swarmSize; i++) {
 				//Check if too close to other robots
-				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.4) {
+				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.1) {
 					Serial.printf("Robot too close to robot %s", otherRobots[i].name.c_str());
 				}
 			}
+			float coords1[2] = {0, 0};
+			float coords2[2] = {taskVals.bbDistance, 0};
+			float coords3[2] = {0, taskVals.bbDistance};
+			float coords4[2] = {taskVals.bbDistance, taskVals.bbDistance};
+			if (edgeDistance(coords1, coords2, thisRobot.coords) < 0.1)
+				Serial.println("Too close to edge");
+			else if(edgeDistance(coords1, coords3, thisRobot.coords) < 0.1) 
+				Serial.println("Too close to edge");
+			else if(edgeDistance(coords2, coords4, thisRobot.coords) < 0.1) 
+				Serial.println("Too close to edge");
+			else if(edgeDistance(coords3, coords4, thisRobot.coords) < 0.1) 
+				Serial.println("Too close to edge");
 		}
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(300 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -254,10 +267,13 @@ void getOrdersTask(void * pvParameters) {
 			tempResult.replace("[", "");
 			tempResult.replace("]", "");
 
-			int arr[20];
+			int arr[ORDERLENGTH];
 			int index = 0;
 			int start = 0;
 			int end = 0;
+
+			for (int i = 0; i < ORDERLENGTH; i++)
+				arr[i] = 0;
 
 			for (int i = 0; i < tempResult.length(); i++) {
 				if (tempResult[i] == ',' || i == tempResult.length() - 1) {
@@ -268,7 +284,7 @@ void getOrdersTask(void * pvParameters) {
 				}
 			}
 			Serial.printf("Orders: ");
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < ORDERLENGTH; i++) {
 				Serial.printf("%d, ", arr[i]);
 				if (arr[i] != 0)
 					xQueueSend(mrsHandle.orderQueue, &arr[i], portMAX_DELAY);
@@ -283,6 +299,8 @@ void completeOrdersTask(void * pvParameters) {
 	for(;;) {
 		uint8_t orders;
 		if(xQueueReceive(mrsHandle.orderQueue, &orders, 50)) {
+			
+
 			switch (orders) {
 				case forward:
 					Serial.printf("Moving Forward\r\n");
@@ -316,5 +334,6 @@ void completeOrdersTask(void * pvParameters) {
 			}
 			MRS_wifiPostJson("/completeOrder", "{\"id\":" +  std::to_string(thisRobot.id) + "}");
 		}
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
