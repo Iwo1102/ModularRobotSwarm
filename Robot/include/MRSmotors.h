@@ -11,4 +11,6 @@ void motorBackward();
 void motorLeft();
 void motorRight();
 void motorStop();
+
+void move(int, float);
 #endif

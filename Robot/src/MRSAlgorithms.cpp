@@ -34,7 +34,7 @@ float edgeDistance(float line1Coords[2], float line2Coords[2], float robotCoords
     float distance;
     float slope = (line2Coords[1] -  line1Coords[1]) / (line2Coords[0] -  line1Coords[0]);
 
-    distance = (fabs (line1Coords[1] - slope * line1Coords[0] - robotCoords[1])) / (sqrt(1 + slope * slope));
+    distance = (fabs(line1Coords[1] - slope * line1Coords[0] - robotCoords[1])) / (sqrt(1 + slope * slope));
     return distance;
 }
 

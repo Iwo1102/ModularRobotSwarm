@@ -21,22 +21,6 @@ void setup() {
 
 	gpioInit();
 
-	Serial.println("Moving forward");
-	motorForward();
-	delay(2000);
-	Serial.println("Moving backward");
-	motorBackward();
-	delay(2000);
-	Serial.println("Moving left");
-	motorLeft();
-	delay(2000);
-	Serial.println("Moving right");
-	motorRight();
-	delay(2000);
-	Serial.println("stopping");
-	motorStop();
-	delay(2000);
-
 	thisRobot.name = "Robot2";
 
 	Serial.println("Bluetooth® Low Energy Central scan");
@@ -51,7 +35,7 @@ void setup() {
 	mrsHandle.getDistanceSemaphore = xSemaphoreCreateBinary();
 	mrsHandle.checkProximitySemaphore = xSemaphoreCreateBinary();
 	mrsHandle.distanceEvent = xEventGroupCreate();
-	mrsHandle.orderQueue = xQueueCreate(20, sizeof(uint8_t));
+	mrsHandle.orderQueue = xQueueCreate(20, sizeof(mrsOrdersStruct_h));
 
 	xTaskCreate(peripheralTask, "Peripheral Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral);
 	xTaskCreate(distanceTask, "Distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance);
@@ -62,7 +46,7 @@ void setup() {
 	xTaskCreate(getOthersTask, "Get Other Robots Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 4, &mrsHandle.getOthers);
 	xTaskCreate(checkProximityTask, "Check Proximity Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 3, &mrsHandle.checkProximity);
 	xTaskCreate(getOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.getOrders);
-	xTaskCreate(completeOrdersTask, "get orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.completeOrders);
+	xTaskCreate(completeOrdersTask, "complete orders Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.completeOrders);
 
 }
 

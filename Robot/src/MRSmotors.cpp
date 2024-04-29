@@ -58,8 +58,8 @@ void motorStop() {
 }
 
 void move(int direction, float distance) {
-    float secs1Meter = 10;
-    float secs360Degrees = 10;
+    float secs1Meter = 2.3;
+    float secs360Degrees = 0.75;
     float timeToMove = secs1Meter * distance;
     float timeToTurn = secs360Degrees * (distance / 360);
 

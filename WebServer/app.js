@@ -18,7 +18,7 @@ const robotSchema = new mongoose.Schema({
 	name: String,
 	coords: [Number],
 	available: Boolean,
-	orders: [{code: Number, sent: Boolean}],
+	orders: [{direction: String, distance: Number, sent: Boolean}],
 	lastUpdate: Number
 
 });
@@ -259,17 +259,18 @@ app.post('/updateDistance', async (req, res) => {
 });
 
 app.post('/sendOrder', async (req, res) => {
-	let callerName = req.body.name;
-	let callerOrders = req.body.orders
+	const callerName = req.body.name;
+	const callerOrders = req.body.orders;
+
 	console.log("Caller Orders length:", callerOrders.length);
 	try {
-		let robot = await Robot.findOne({name: {$eq: callerName}})
+		const robot = await Robot.findOne({name: {$eq: callerName}})
 		console.log("robot name: " + robot.name + " available: " + robot.available)
 		if (robot != null) {
 			if (!robot.available) {
 				for (let i = 0; i < callerOrders.length; i++) {
-					await Robot.findOneAndUpdate({name: {$eq: callerName}}, {$push: {orders: {code: callerOrders[i], sent: 0}}});
-					console.log("Orders sent")
+					await Robot.findOneAndUpdate({name: {$eq: callerName}}, {$push: {orders: {direction: callerOrders[i].direction, distance: callerOrders[i].distance, sent: 0}}});
+					console.log("Orders sent: " + callerOrders[i].direction  + " " + callerOrders[i].distance)
 				}
 				res.status(200).json({ message: "Orders sent successfully" });
 			} else {
@@ -291,19 +292,19 @@ app.get('/getOrders', async (req, res) => {
 		let callerId = req.query.id;
 		let robot = await Robot.findOne({id: {$eq: callerId}})
 		await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now()})
-		let orders = [];
+		let sendOrders = [];
 		for (let i = 0; i < robot.orders.length; i++) {
 			if (!robot.orders[i].sent) {
-				console.log(robot.orders[i].code)
-				orders.push(robot.orders[i].code);
+
+				console.log(robot.orders[i].distance + " " + robot.orders[i].direction)
+				sendOrders.push({distance: robot.orders[i].distance, direction: robot.orders[i].direction});
 				await Robot.findOneAndUpdate({id: {$eq: callerId}}, {lastUpdate: Date.now(),  $set: {[`orders.${i}.sent`]: true}})		
-			} else {
-				orders.push(0);
 			}
+			console.log(sendOrders)
 		}
 
-		console.log("Orders sent:" + orders);
-		res.send(orders)
+		console.log("Orders sent:" + sendOrders);
+		res.json(sendOrders)
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 		console.log(error.message);

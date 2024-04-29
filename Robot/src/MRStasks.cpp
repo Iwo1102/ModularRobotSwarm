@@ -263,75 +263,48 @@ void getOrdersTask(void * pvParameters) {
 		Serial.printf("getOrders Task\r\n");
 		String tempResult = MRS_wifiGetJson("/getOrders", "{\"id\": " + std::to_string(thisRobot.id) + "}");
 		if ((tempResult.toInt() != 404) || (tempResult.toInt() != 500)) {
-			// Remove '[' and ']'
-			tempResult.replace("[", "");
-			tempResult.replace("]", "");
+			JsonDocument doc;
+			DeserializationError error = deserializeJson(doc, tempResult);
 
-			int arr[ORDERLENGTH];
-			int index = 0;
-			int start = 0;
-			int end = 0;
+			// Test if parsing fails.
+			if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.f_str());
+			} else {
+				JsonArray orders = doc.as<JsonArray>();
+				mrsOrdersStruct_h orderStruct[ORDERLENGTH];
 
-			for (int i = 0; i < ORDERLENGTH; i++)
-				arr[i] = 0;
-
-			for (int i = 0; i < tempResult.length(); i++) {
-				if (tempResult[i] == ',' || i == tempResult.length() - 1) {
-					end = (i == tempResult.length() - 1) ? i + 1 : i;
-					String numStr = tempResult.substring(start, end);
-					arr[index++] = numStr.toInt();
-					start = i + 1;
+				int i = 0;
+				for(JsonObject order : orders) {
+					orderStruct[i].direction = order["direction"].as<String>();
+					orderStruct[i].distance = order["distance"].as<float>();
+					xQueueSend(mrsHandle.orderQueue, &orderStruct[i], portMAX_DELAY);
+					i++;
 				}
 			}
-			Serial.printf("Orders: ");
-			for (int i = 0; i < ORDERLENGTH; i++) {
-				Serial.printf("%d, ", arr[i]);
-				if (arr[i] != 0)
-					xQueueSend(mrsHandle.orderQueue, &arr[i], portMAX_DELAY);
-			}
-			Serial.printf("\r\n");
-			vTaskDelay(5000 / portTICK_PERIOD_MS);
 		}
+		Serial.printf("\r\n");
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}
 }
 
 void completeOrdersTask(void * pvParameters) {
 	for(;;) {
-		uint8_t orders;
-		if(xQueueReceive(mrsHandle.orderQueue, &orders, 50)) {
-			
-
-			switch (orders) {
-				case forward:
-					Serial.printf("Moving Forward\r\n");
-				break;
-				case backward:
-					Serial.printf("Moving Backward\r\n");
-				break;
-				case left:
-					Serial.printf("Moving left\r\n");
-				break;
-				case right:
-					Serial.printf("Moving right\r\n");
-				break;
-				case sweep:
-					Serial.printf("Sweeping\r\n");
-				break;
-				case perimiter:
-					Serial.printf("Permiter moving\r\n");
-				break;
-				case scan:
-					Serial.printf("scanning\r\n");
-				break;
-				case scan_sweep:
-					Serial.printf("sweeping and scanning\r\n");
-				break;
-				case scan_perimiter:
-					Serial.printf("perimeter and scanning\r\n");
-				break;
-				default:
-					Serial.printf("Unknown Order\r\n");
-			}
+		mrsOrdersStruct_h orders;
+		int dirNumber = 0;
+		if(xQueueReceive(mrsHandle.orderQueue, &orders, 50) == pdTRUE) {
+			if (orders.direction == "forward")
+				dirNumber = forward;
+			else if (orders.direction == "backward")
+				dirNumber = backward;
+			else if (orders.direction == "left")
+				dirNumber = left;
+			else if (orders.direction == "right")
+				dirNumber = right;
+			else
+				dirNumber = stop;
+			Serial.printf("%s, %.2f\r\n", orders.direction, orders.distance);
+			move(dirNumber, orders.distance);
 			MRS_wifiPostJson("/completeOrder", "{\"id\":" +  std::to_string(thisRobot.id) + "}");
 		}
 		vTaskDelay(1000 / portTICK_PERIOD_MS);

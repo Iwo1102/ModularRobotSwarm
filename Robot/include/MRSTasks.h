@@ -8,6 +8,7 @@
 #include "MRSAlgorithms.h"
 #include "MRSWifiClient.h"
 #include "MRSRobotData.h"
+#include "MRSmotors.h"
 
 const int KILOBYTE = 1024;
 const int ORDERLENGTH = 20;
@@ -57,8 +58,8 @@ struct mrsTaskHandle_h {
 };
 
 struct mrsOrdersStruct_h {
-    int order;
-    int distance;
+    String direction;
+    float distance;
 };
 
 enum mrsOrders_h {
@@ -66,6 +67,7 @@ enum mrsOrders_h {
     backward,
     left,
     right,
+    stop,
     sweep,
     perimiter,
     scan,
