@@ -235,24 +235,35 @@ void getBeaconDistanceTask(void * pvParameters) {
 void checkProximityTask(void * pvParameters) {
 	for(;;) {
 		if (xSemaphoreTake(mrsHandle.checkProximitySemaphore, 50) == pdTRUE) {
+			bool proximityFlag = false;
 			for (int i = 0; i < swarmSize; i++) {
 				//Check if too close to other robots
 				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.1) {
 					Serial.printf("Robot too close to robot %s", otherRobots[i].name.c_str());
+					proximityFlag = true;
 				}
 			}
 			float coords1[2] = {0, 0};
 			float coords2[2] = {taskVals.bbDistance, 0};
 			float coords3[2] = {0, taskVals.bbDistance};
 			float coords4[2] = {taskVals.bbDistance, taskVals.bbDistance};
-			if (edgeDistance(coords1, coords2, thisRobot.coords) < 0.1)
+			if (edgeDistance(coords1, coords2, thisRobot.coords) < 0.1) {
 				Serial.println("Too close to edge");
-			else if(edgeDistance(coords1, coords3, thisRobot.coords) < 0.1) 
+				proximityFlag = true;
+			} else if(edgeDistance(coords1, coords3, thisRobot.coords) < 0.1) {
 				Serial.println("Too close to edge");
-			else if(edgeDistance(coords2, coords4, thisRobot.coords) < 0.1) 
+				proximityFlag = true;
+			} else if(edgeDistance(coords2, coords4, thisRobot.coords) < 0.1) { 
 				Serial.println("Too close to edge");
-			else if(edgeDistance(coords3, coords4, thisRobot.coords) < 0.1) 
+				proximityFlag = true;
+			} else if(edgeDistance(coords3, coords4, thisRobot.coords) < 0.1) {
 				Serial.println("Too close to edge");
+				proximityFlag = true;
+			}
+			if (proximityFlag) {
+				move(backward, 0.2);
+				move(left, 180);
+			}
 		}
 		vTaskDelay(300 / portTICK_PERIOD_MS);
 	}
@@ -277,10 +288,11 @@ void getOrdersTask(void * pvParameters) {
 				int i = 0;
 				for(JsonObject order : orders) {
 					orderStruct[i].direction = order["direction"].as<String>();
-					orderStruct[i].distance = order["distance"].as<float>();
-					xQueueSend(mrsHandle.orderQueue, &orderStruct[i], portMAX_DELAY);
+					orderStruct[i].distance = order["distance"].as<float>();	
 					i++;
 				}
+				for (int j = i; j < 0; j--)
+					xQueueSend(mrsHandle.orderQueue, &orderStruct[j], portMAX_DELAY);
 			}
 		}
 		Serial.printf("\r\n");
