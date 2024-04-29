@@ -8,8 +8,10 @@
 #include "MRSAlgorithms.h"
 #include "MRSWifiClient.h"
 #include "MRSRobotData.h"
+#include "MRSmotors.h"
 
-#define KILOBYTE 1024
+const int KILOBYTE = 1024;
+const int ORDERLENGTH = 20;
 
 #define calcCoordsBit (1 << 0)
 
@@ -55,11 +57,17 @@ struct mrsTaskHandle_h {
     QueueHandle_t orderQueue = NULL;
 };
 
+struct mrsOrdersStruct_h {
+    String direction;
+    float distance;
+};
+
 enum mrsOrders_h {
     forward = 1,
     backward,
     left,
     right,
+    stop,
     sweep,
     perimiter,
     scan,

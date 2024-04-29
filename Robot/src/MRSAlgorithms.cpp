@@ -29,3 +29,13 @@ void getRobotCoords(float* coordBuf, float b1r, float b2r, float bb) {
 float distanceDiff(float coord1Buff[2], float coord2Buff[2]) {
     return sqrt(pow((coord2Buff[0] - coord1Buff[0]), 2) + pow((coord2Buff[1] - coord1Buff[1]), 2));
 }
+
+float edgeDistance(float line1Coords[2], float line2Coords[2], float robotCoords[2]) {
+    float distance;
+    float slope = (line2Coords[1] -  line1Coords[1]) / (line2Coords[0] -  line1Coords[0]);
+
+    distance = (fabs(line1Coords[1] - slope * line1Coords[0] - robotCoords[1])) / (sqrt(1 + slope * slope));
+    return distance;
+}
+
+

@@ -10,9 +10,9 @@
 #include "MRSRobotData.h"
 
 struct MRS_wifi {
-    const char* SSID = "";
-    const char* PASSWORD = "";
-    const char* serverName = "";
+    const char* SSID = "VM8258558";
+    const char* PASSWORD = "d3affhtse4hS";
+    const char* serverName = "http://192.168.0.122:3000";
 };
 
 enum MRS_pages {

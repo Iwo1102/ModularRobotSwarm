@@ -38,7 +38,7 @@ void peripheralTask(void * pvParameters) {
 			xSemaphoreGive(mrsHandle.BeaconfoundSemaphore);
 			vTaskSuspend(mrsHandle.peripheral);
 		}
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -125,6 +125,7 @@ void distanceTask(void * pvParameters) {
 				}
 		} 
 		vTaskResume(mrsHandle.peripheral);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -140,10 +141,10 @@ void findCellTask(void * pvParameters) {
 				thisRobot.id = tempResult;
 				vTaskSuspend(NULL);
 			} else {
-				vTaskDelay(100 / portTICK_PERIOD_MS);
+				vTaskDelay(1000 / portTICK_PERIOD_MS);
 			}
 		} else {
-			vTaskDelay(100 / portTICK_PERIOD_MS);
+			vTaskDelay(1000 / portTICK_PERIOD_MS);
 		}
 	}
 }
@@ -200,7 +201,7 @@ void getOthersTask(void * pvParameters) {
 		}
 		else
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
 } 
 
@@ -226,7 +227,7 @@ void getBeaconDistanceTask(void * pvParameters) {
 			vTaskDelay(10000 / portTICK_PERIOD_MS);
 		} else {
 			xSemaphoreGive(mrsHandle.testConnectionSemaphore);
-			vTaskDelay(100 / portTICK_PERIOD_MS);
+			vTaskDelay(10000 / portTICK_PERIOD_MS);
 		}
 	}
 }
@@ -234,14 +235,37 @@ void getBeaconDistanceTask(void * pvParameters) {
 void checkProximityTask(void * pvParameters) {
 	for(;;) {
 		if (xSemaphoreTake(mrsHandle.checkProximitySemaphore, 50) == pdTRUE) {
+			bool proximityFlag = false;
 			for (int i = 0; i < swarmSize; i++) {
 				//Check if too close to other robots
-				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.4) {
+				if (distanceDiff(thisRobot.coords, otherRobots[i].coords) < 0.1) {
 					Serial.printf("Robot too close to robot %s", otherRobots[i].name.c_str());
+					proximityFlag = true;
 				}
 			}
+			float coords1[2] = {0, 0};
+			float coords2[2] = {taskVals.bbDistance, 0};
+			float coords3[2] = {0, taskVals.bbDistance};
+			float coords4[2] = {taskVals.bbDistance, taskVals.bbDistance};
+			if (edgeDistance(coords1, coords2, thisRobot.coords) < 0.1) {
+				Serial.println("Too close to edge");
+				proximityFlag = true;
+			} else if(edgeDistance(coords1, coords3, thisRobot.coords) < 0.1) {
+				Serial.println("Too close to edge");
+				proximityFlag = true;
+			} else if(edgeDistance(coords2, coords4, thisRobot.coords) < 0.1) { 
+				Serial.println("Too close to edge");
+				proximityFlag = true;
+			} else if(edgeDistance(coords3, coords4, thisRobot.coords) < 0.1) {
+				Serial.println("Too close to edge");
+				proximityFlag = true;
+			}
+			if (proximityFlag) {
+				move(backward, 0.2);
+				move(left, 180);
+			}
 		}
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(300 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -250,71 +274,51 @@ void getOrdersTask(void * pvParameters) {
 		Serial.printf("getOrders Task\r\n");
 		String tempResult = MRS_wifiGetJson("/getOrders", "{\"id\": " + std::to_string(thisRobot.id) + "}");
 		if ((tempResult.toInt() != 404) || (tempResult.toInt() != 500)) {
-			// Remove '[' and ']'
-			tempResult.replace("[", "");
-			tempResult.replace("]", "");
+			JsonDocument doc;
+			DeserializationError error = deserializeJson(doc, tempResult);
 
-			int arr[20];
-			int index = 0;
-			int start = 0;
-			int end = 0;
+			// Test if parsing fails.
+			if (error) {
+				Serial.print(F("deserializeJson() failed: "));
+				Serial.println(error.f_str());
+			} else {
+				JsonArray orders = doc.as<JsonArray>();
+				mrsOrdersStruct_h orderStruct[ORDERLENGTH];
 
-			for (int i = 0; i < tempResult.length(); i++) {
-				if (tempResult[i] == ',' || i == tempResult.length() - 1) {
-					end = (i == tempResult.length() - 1) ? i + 1 : i;
-					String numStr = tempResult.substring(start, end);
-					arr[index++] = numStr.toInt();
-					start = i + 1;
+				int i = 0;
+				for(JsonObject order : orders) {
+					orderStruct[i].direction = order["direction"].as<String>();
+					orderStruct[i].distance = order["distance"].as<float>();	
+					i++;
 				}
+				for (int j = i; j < 0; j--)
+					xQueueSend(mrsHandle.orderQueue, &orderStruct[j], portMAX_DELAY);
 			}
-			Serial.printf("Orders: ");
-			for (int i = 0; i < 6; i++) {
-				Serial.printf("%d, ", arr[i]);
-				if (arr[i] != 0)
-					xQueueSend(mrsHandle.orderQueue, &arr[i], portMAX_DELAY);
-			}
-			Serial.printf("\r\n");
-			vTaskDelay(5000 / portTICK_PERIOD_MS);
 		}
+		Serial.printf("\r\n");
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}
 }
 
 void completeOrdersTask(void * pvParameters) {
 	for(;;) {
-		uint8_t orders;
-		if(xQueueReceive(mrsHandle.orderQueue, &orders, 50)) {
-			switch (orders) {
-				case forward:
-					Serial.printf("Moving Forward\r\n");
-				break;
-				case backward:
-					Serial.printf("Moving Backward\r\n");
-				break;
-				case left:
-					Serial.printf("Moving left\r\n");
-				break;
-				case right:
-					Serial.printf("Moving right\r\n");
-				break;
-				case sweep:
-					Serial.printf("Sweeping\r\n");
-				break;
-				case perimiter:
-					Serial.printf("Permiter moving\r\n");
-				break;
-				case scan:
-					Serial.printf("scanning\r\n");
-				break;
-				case scan_sweep:
-					Serial.printf("sweeping and scanning\r\n");
-				break;
-				case scan_perimiter:
-					Serial.printf("perimeter and scanning\r\n");
-				break;
-				default:
-					Serial.printf("Unknown Order\r\n");
-			}
+		mrsOrdersStruct_h orders;
+		int dirNumber = 0;
+		if(xQueueReceive(mrsHandle.orderQueue, &orders, 50) == pdTRUE) {
+			if (orders.direction == "forward")
+				dirNumber = forward;
+			else if (orders.direction == "backward")
+				dirNumber = backward;
+			else if (orders.direction == "left")
+				dirNumber = left;
+			else if (orders.direction == "right")
+				dirNumber = right;
+			else
+				dirNumber = stop;
+			Serial.printf("%s, %.2f\r\n", orders.direction, orders.distance);
+			move(dirNumber, orders.distance);
 			MRS_wifiPostJson("/completeOrder", "{\"id\":" +  std::to_string(thisRobot.id) + "}");
 		}
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
