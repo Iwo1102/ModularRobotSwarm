@@ -1,6 +1,7 @@
 #ifndef MRSALGORITHMS_H
 #define MRSALGORITHMS_H
 #include <math.h>
+#include <Arduino.h>
 
 const uint8_t RSSIAVGSIZE = 3;
 

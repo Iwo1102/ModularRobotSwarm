@@ -3,7 +3,7 @@
 
 #include <string>
 
-const int swarmSize = 2;
+const int swarmSize = 1;
 
 struct mrsData_h {
     std::string name = "";

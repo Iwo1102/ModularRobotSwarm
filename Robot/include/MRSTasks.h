@@ -25,9 +25,12 @@ void testConnectionTask(void * pvParameters);
 void getOthersTask(void * pvParameters);
 void updateLocationTask(void * pvParameters);
 void getBeaconDistanceTask(void * pvParameters);
-void checkProximityTask(void * pvParameters);
 void getOrdersTask(void * pvParameters);
+
+//Motor Tasks
 void completeOrdersTask(void * pvParameters);
+void checkProximityTask(void * pvParameters);
+
 
 struct mrsTask_h {
     BLEDevice peripheral;

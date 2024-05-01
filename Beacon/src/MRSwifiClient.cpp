@@ -15,7 +15,6 @@ void MRS_SetupConnection() {
     Serial.print("Connected to WiFi network with IP Address: ");
     Serial.println(WiFi.localIP());
  
-    Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
 }
 
 void MRS_wifiPostJson(std::string page, std::string valueType, std::string value, char distance[10]) {

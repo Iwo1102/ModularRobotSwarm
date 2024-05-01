@@ -24,6 +24,7 @@ void getRobotCoords(float* coordBuf, float b1r, float b2r, float bb) {
 	coordBuf[1] = sqrt(fabs(pow(b1r, 2)) - pow(coordBuf[0], 2));
    if (b1r >= b2r)
         coordBuf[1] *= -1;
+    Serial.printf("test coords: %.2f, %.2f\r\n\n", coordBuf[0], coordBuf[1]);
 }
 
 float distanceDiff(float coord1Buff[2], float coord2Buff[2]) {
