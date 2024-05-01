@@ -62,26 +62,106 @@ void move(int direction, float distance) {
     float secs360Degrees = 0.75;
     float timeToMove = secs1Meter * distance;
     float timeToTurn = secs360Degrees * (distance / 360);
+    float timeto90 = secs360Degrees * (90 / 360);
+    float timeTo20cm = secs1Meter * 0.2;
 
     switch (direction) {
-        case 1:
+        case forward:
             motorForward();
+            Serial.printf("time to move: %.2f\r\n", timeToMove);
             delay(timeToMove * 1000);
+            motorStop();
             break;
         break;
-        case 2:
+        case backward:
             motorBackward();
             delay(timeToMove * 1000);
+            motorStop();
             break;
-        case 3:
+        case left:
             motorLeft();
             delay(timeToTurn * 1000);
+            motorStop();
             break;
-        case 4:
+        case right:
             motorRight();
             delay(timeToTurn * 1000);
+            motorStop();
             break;
-        case 5:
+        case stop:
+            motorStop();
+            break;
+        case sweep:
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            break;
+        case perimiter:
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeTo20cm * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorLeft();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeTo20cm * 1000);
+            motorStop();
+            motorLeft();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeTo20cm * 1000);
+            motorStop();
+            motorRight();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeToMove * 1000);
+            motorStop();
+            motorLeft();
+            delay(timeto90 * 1000);
+            motorStop();
+            motorForward();
+            delay(timeTo20cm * 1000);
+            motorStop();
+            motorLeft();
+            delay(timeto90 * 1000);
             motorStop();
             break;
         default:

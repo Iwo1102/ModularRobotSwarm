@@ -2,6 +2,7 @@
 #define MRSMOTORS_H
 
 #include <Arduino.h>
+#include "MRSTasks.h"
 
 const uint8_t motorPins[4] = {33, 25, 26, 27}, motorPowerPin = 12, LEDPin = 14;
 

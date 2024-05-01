@@ -20,15 +20,25 @@ void setup() {
 	}
 
 	gpioInit();
+	//motor Tests
+	/*Serial.println("Forward");
+	move(forward, 5);
+	Serial.println("left");
+	move(left, 720);
+	Serial.println("right");
+	move(right, 720);
+	Serial.println("stop");
+	move(stop, 1);
+	*/
 
-	thisRobot.name = "Robot2";
-
+	thisRobot.name = "Green";
+	Serial.printf("ad\r\n");
 	Serial.println("Bluetooth® Low Energy Central scan");
 	Serial.print("Device Adress: ");
 	Serial.println(BLE.address());
 
 	// start scanning for peripheral
-	BLE.scanForName("beacon1");
+	BLE.scan();
 
 	mrsHandle.BeaconfoundSemaphore = xSemaphoreCreateBinary();
 	mrsHandle.testConnectionSemaphore = xSemaphoreCreateBinary();
@@ -37,8 +47,8 @@ void setup() {
 	mrsHandle.distanceEvent = xEventGroupCreate();
 	mrsHandle.orderQueue = xQueueCreate(20, sizeof(mrsOrdersStruct_h));
 
-	xTaskCreatePinnedToCore(peripheralTask, "Peripheral Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.peripheral, 0);
-	xTaskCreatePinnedToCore(distanceTask, "Distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.distance, 0);
+	xTaskCreatePinnedToCore(peripheralTask, "Peripheral Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 2, &mrsHandle.peripheral, 1);
+	xTaskCreatePinnedToCore(distanceTask, "Distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 1, &mrsHandle.distance, 0);
 	xTaskCreatePinnedToCore(findCellTask, "Find Cell Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 5, &mrsHandle.findCell, 0);
 	xTaskCreatePinnedToCore(testConnectionTask, "Test Connection Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 3, &mrsHandle.testConnection, 0);
 	xTaskCreatePinnedToCore(getBeaconDistanceTask, "Beacon-Beacon distance Task", 4 * KILOBYTE, NULL, configMAX_PRIORITIES - 5, &mrsHandle.getBeaconDistance, 0);

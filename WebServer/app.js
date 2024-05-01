@@ -269,7 +269,10 @@ app.post('/sendOrder', async (req, res) => {
 		if (robot != null) {
 			if (!robot.available) {
 				for (let i = 0; i < callerOrders.length; i++) {
-					await Robot.findOneAndUpdate({name: {$eq: callerName}}, {$push: {orders: {direction: callerOrders[i].direction, distance: callerOrders[i].distance, sent: 0}}});
+					await Robot.findOneAndUpdate({name: {$eq: callerName}}, {$push: {orders: {
+													direction: callerOrders[i].direction,
+													distance: callerOrders[i].distance,
+													sent: 0}}});
 					console.log("Orders sent: " + callerOrders[i].direction  + " " + callerOrders[i].distance)
 				}
 				res.status(200).json({ message: "Orders sent successfully" });

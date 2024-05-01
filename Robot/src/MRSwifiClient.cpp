@@ -50,7 +50,7 @@ String MRS_wifiGetJson(std::string page, std::string getValue) {
 
     DeserializationError error = deserializeJson(doc, getValue);
 
-    // Test if parsing succeeds.
+    // Test if parsing fails.
     if (error) {
         Serial.print(F("deserializeJson() failed: "));
         Serial.println(error.f_str());
